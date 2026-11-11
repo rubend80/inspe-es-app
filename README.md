@@ -89,7 +89,10 @@ a app enquanto a câmara está aberta, ao reabrir ela volta à divisão e junta 
 também na galeria do telemóvel.
 
 - Cada `git push` para `main` faz o GitHub construir o APK (`.github/workflows/android.yml`) e publicá-lo em
-  **Releases** (`Inspecoes-1.<n>.apk`). Instala-se por cima da versão anterior (mesma assinatura, `signing/`).
+  **Releases** (`Inspecoes-1.<n>.apk` e `Inspecoes.apk`). Instala-se por cima da versão anterior (mesma assinatura,
+  `signing/inspecoes.jks`; a palavra-passe está no segredo `KEYSTORE_PASSWORD` do repositório, não no código).
+  Com o repositório público, a última versão descarrega-se sempre em
+  `https://github.com/rubend80/inspe-es-app/releases/latest/download/Inspecoes.apk`.
 - Código Android: `android-src/` (plugin `NativePhotos` e `MainActivity`); `scripts/patch-android.mjs` junta-o ao
   projeto que o Capacitor cria. Do lado da app: `src/native/`, `src/ui/nativeSession.ts`, `src/storage/NativeFolderProvider.ts`.
 - Na primeira vez, o telemóvel pede autorização para as fotos: escolher **"Permitir todas"** (com "selecionadas",
