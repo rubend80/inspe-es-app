@@ -1,0 +1,8 @@
+{
+  "appId": "pt.livehouse.inspecoes",
+  "appName": "Inspeções",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}

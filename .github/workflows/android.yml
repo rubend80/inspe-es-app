@@ -1,0 +1,64 @@
+name: APK Android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Testes
+        run: npm test
+
+      - name: Construir a app web
+        run: npm run build
+
+      - name: Criar o projeto Android
+        run: |
+          npx cap add android
+          node scripts/patch-android.mjs
+          npx cap sync android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 1.${{ github.run_number }}
+
+      - name: Construir o APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/Inspecoes-1.${{ github.run_number }}.apk"
+        env:
+          # Repositório privado: a palavra-passe só serve para assinar o APK da app interna.
+          KEYSTORE_PASSWORD: LiveHouse-Inspecoes-2026
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Inspecoes-1.${{ github.run_number }}
+          path: Inspecoes-1.${{ github.run_number }}.apk
+
+      - name: Publicar a versão (para descarregar no telemóvel)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: Inspeções 1.${{ github.run_number }}
+          files: Inspecoes-1.${{ github.run_number }}.apk
