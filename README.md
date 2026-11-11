@@ -79,6 +79,22 @@ Por baixo:
 - Abre e tira fotos sem rede (instalável no ecrã inicial do Android).
 - O botão "Voltar" do Android funciona como esperado (câmara → divisões → processos).
 
+## App Android (APK)
+
+Além da versão web, há uma **app Android instalada** (ficheiro APK), feita com Capacitor a partir do mesmo código.
+Na app instalada, "Fotografar com a câmara do telemóvel" abre a câmara normal do telemóvel (fotos seguidas, zoom,
+todos os modos) e, ao voltar, **todas as fotos tiradas entretanto entram sozinhas** na divisão, tal e qual saíram da
+câmara. As fotos ficam em `Documents/Inspeções/<processo>/2. Fotos/<divisão>/` (sem escolher pasta). Se o Android fechar
+a app enquanto a câmara está aberta, ao reabrir ela volta à divisão e junta as fotos. As fotos originais continuam
+também na galeria do telemóvel.
+
+- Cada `git push` para `main` faz o GitHub construir o APK (`.github/workflows/android.yml`) e publicá-lo em
+  **Releases** (`Inspecoes-1.<n>.apk`). Instala-se por cima da versão anterior (mesma assinatura, `signing/`).
+- Código Android: `android-src/` (plugin `NativePhotos` e `MainActivity`); `scripts/patch-android.mjs` junta-o ao
+  projeto que o Capacitor cria. Do lado da app: `src/native/`, `src/ui/nativeSession.ts`, `src/storage/NativeFolderProvider.ts`.
+- Na primeira vez, o telemóvel pede autorização para as fotos: escolher **"Permitir todas"** (com "selecionadas",
+  a app não vê as fotos novas).
+
 ## Requisitos e avisos
 
 - **Chrome para Android atualizado.** O seletor de pastas só existe nas versões recentes do Chrome para Android
