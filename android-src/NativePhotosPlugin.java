@@ -109,8 +109,13 @@ public class NativePhotosPlugin extends Plugin {
 
     @PluginMethod
     public void listSince(PluginCall call) {
-        Double sinceValue = call.getDouble("since");
-        long since = sinceValue == null ? 0L : sinceValue.longValue();
+        // O número chega do JavaScript como Long (não Double): ler como Number para não ficar 0 (= todas as fotos).
+        Object raw = call.getData().opt("since");
+        long since = raw instanceof Number ? ((Number) raw).longValue() : 0L;
+        if (since <= 0L) {
+            call.reject("Falta a hora de início das fotos.");
+            return;
+        }
         ContentResolver resolver = getContext().getContentResolver();
         Uri collection = imagesCollection();
         String location = Build.VERSION.SDK_INT >= 29 ? MediaStore.MediaColumns.RELATIVE_PATH : MediaStore.MediaColumns.DATA;

@@ -92,7 +92,10 @@ export function createNativeSession(
     if (!session || importing || disposed) return;
     importing = true;
     try {
-      const { items } = await NativePhotos.listSince({ since: session.since - 2000 });
+      const from = session.since - 2000;
+      const { items: listed } = await NativePhotos.listSince({ since: from });
+      // Segurança: só as fotos tiradas depois de abrir a câmara, mesmo que o telemóvel devolva mais.
+      const items = listed.filter((i) => i.dateAdded >= from - 1000 || i.dateTaken >= from);
       const remembered = (await ctx.store.getMeta<string[]>(IMPORTED_KEY)) ?? [];
       const done = new Set(remembered);
       const fresh = items.filter((i) => !done.has(i.id));
