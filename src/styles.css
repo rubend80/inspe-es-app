@@ -1001,3 +1001,58 @@ section.camera[hidden] {
 .native-status[hidden] {
   display: none;
 }
+
+/* ---------- Processo: Espaços comuns / Frações / Fração única ---------- */
+
+.part-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.part {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 84px;
+  padding: 16px 18px;
+  border: 1px solid var(--taupe-line);
+  border-left: 5px solid var(--taupe-line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.part.has-photos {
+  border-left-color: var(--magenta);
+}
+
+.part-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.part-text strong {
+  font-size: 1.15rem;
+}
+
+.part-text small {
+  color: var(--muted, #6b625c);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.part-count {
+  flex: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted, #6b625c);
+}
+
+.part:active {
+  background: #f1ece7;
+}

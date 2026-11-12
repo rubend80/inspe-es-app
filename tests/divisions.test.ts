@@ -1,29 +1,40 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { DEFAULT_DIVISIONS, divisionsForProcess, makeDivision, nextDivision } from '../src/divisions.ts';
+import {
+  COMMON_DIVISIONS,
+  defaultDivisions,
+  DIVISION_SUGGESTIONS,
+  divisionsForProcess,
+  makeDivision,
+  nextDivision,
+  UNIT_DIVISIONS,
+} from '../src/divisions.ts';
 import { makePhoto } from './helpers.ts';
 
 describe('divisões de origem', () => {
-  it('são as pedidas, por esta ordem', () => {
+  it('frações (e fração única): as pedidas, por esta ordem, com "IC" em vez de "Casa de banho"', () => {
     assert.deepEqual(
-      DEFAULT_DIVISIONS.map((d) => d.name),
-      [
-        'Hall',
-        'Sala',
-        'Cozinha',
-        'Quarto 1',
-        'Quarto 2',
-        'Quarto 3',
-        'Casa de banho 1',
-        'Casa de banho 2',
-        'Garagem',
-      ],
+      UNIT_DIVISIONS.map((d) => d.name),
+      ['Hall', 'Sala', 'Cozinha', 'Quarto 1', 'Quarto 2', 'Quarto 3', 'Quarto 4', 'IC 1', 'IC 2', 'Arrumos', 'Sótão', 'Garagem'],
     );
   });
 
+  it('espaços comuns: fachada, cobertura, terraço e garagem', () => {
+    assert.deepEqual(COMMON_DIVISIONS.map((d) => d.name), ['Fachada', 'Cobertura', 'Terraço', 'Garagem']);
+    assert.equal(defaultDivisions('common'), COMMON_DIVISIONS);
+    assert.equal(defaultDivisions('unit'), UNIT_DIVISIONS);
+  });
+
   it('têm ids únicos e pastas com o nome da divisão', () => {
-    assert.equal(new Set(DEFAULT_DIVISIONS.map((d) => d.id)).size, DEFAULT_DIVISIONS.length);
-    for (const d of DEFAULT_DIVISIONS) assert.equal(d.folder, d.name);
+    for (const list of [UNIT_DIVISIONS, COMMON_DIVISIONS]) {
+      assert.equal(new Set(list.map((d) => d.id)).size, list.length);
+      for (const d of list) assert.equal(d.folder, d.name);
+      for (const d of list) assert.equal(makeDivision(d.name)?.id, d.id, d.name);
+    }
+  });
+
+  it('há sugestões para "outra divisão" nos dois casos', () => {
+    assert.ok(DIVISION_SUGGESTIONS.unit.length > 3 && DIVISION_SUGGESTIONS.common.length > 3);
   });
 });
 
@@ -38,29 +49,34 @@ describe('makeDivision', () => {
   });
 
   it('dá a mesma divisão para "Quarto 1" e "quarto 1" (evita duplicados)', () => {
-    assert.equal(makeDivision('quarto 1')?.id, DEFAULT_DIVISIONS.find((d) => d.name === 'Quarto 1')?.id);
+    assert.equal(makeDivision('quarto 1')?.id, UNIT_DIVISIONS.find((d) => d.name === 'Quarto 1')?.id);
   });
 });
 
 describe('divisionsForProcess', () => {
+  it('espaços comuns usam a sua lista', () => {
+    const list = divisionsForProcess([makeDivision('Escadas')!], [], 'common');
+    assert.deepEqual(list.map((d) => d.name), ['Fachada', 'Cobertura', 'Terraço', 'Garagem', 'Escadas']);
+  });
+
   it('junta as de origem e as acrescentadas, sem repetir', () => {
     const varanda = makeDivision('Varanda')!;
     const list = divisionsForProcess([varanda, makeDivision('Hall')!], []);
-    assert.equal(list.length, DEFAULT_DIVISIONS.length + 1);
+    assert.equal(list.length, UNIT_DIVISIONS.length + 1);
     assert.equal(list.at(-1)?.name, 'Varanda');
   });
 
   it('inclui divisões que já têm fotos mesmo que a lista tenha sido perdida', () => {
-    const orfa = makePhoto('a', 1, { divisionId: 'sotao', divisionName: 'Sótão', divisionFolder: 'Sótão' });
+    const orfa = makePhoto('a', 1, { divisionId: 'varanda', divisionName: 'Varanda', divisionFolder: 'Varanda' });
     const list = divisionsForProcess([], [orfa, makePhoto('b', 2)]);
-    assert.equal(list.at(-1)?.id, 'sotao');
+    assert.equal(list.at(-1)?.id, 'varanda');
     assert.equal(list.filter((d) => d.id === 'cozinha').length, 1);
   });
 });
 
 describe('nextDivision', () => {
   it('devolve a seguinte, e nada na última', () => {
-    const list = [...DEFAULT_DIVISIONS];
+    const list = [...UNIT_DIVISIONS];
     assert.equal(nextDivision(list, 'hall')?.id, 'sala');
     assert.equal(nextDivision(list, 'garagem'), undefined);
     assert.equal(nextDivision(list, 'não-existe'), undefined);

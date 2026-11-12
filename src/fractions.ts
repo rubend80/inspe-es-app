@@ -1,20 +1,15 @@
 import { folderNameFor, slugify } from './naming.ts';
+import type { DivisionScope } from './divisions.ts';
 import type { Fraction, PhotoRecord } from './types.ts';
 
-/** Sugestões ao acrescentar uma fração de um prédio. */
-export const FRACTION_SUGGESTIONS = [
-  'Fração A',
-  'Fração B',
-  'Fração C',
-  'Fração D',
-  'R/C Esq.',
-  'R/C Dto.',
-  '1.º Esq.',
-  '1.º Dto.',
-  '2.º Esq.',
-  '2.º Dto.',
-  'Partes comuns',
-];
+/** Os espaços comuns do prédio funcionam como uma "fração" especial, com pasta própria e divisões próprias. */
+export const COMMON_AREA: Fraction = { id: 'espacos-comuns', name: 'Espaços comuns', folder: 'Espaços comuns' };
+
+/** Que lista de divisões usar: espaços comuns ou de fração (fração escolhida ou fração única). */
+export function scopeOf(fraction?: Fraction | string): DivisionScope {
+  const id = typeof fraction === 'string' ? fraction : fraction?.id;
+  return id === COMMON_AREA.id ? 'common' : 'unit';
+}
 
 export const MAX_FRACTION_NAME = 40;
 
@@ -25,7 +20,7 @@ export function makeFraction(rawName: string): Fraction | undefined {
   const name = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   const id = slugify(name);
   const folder = folderNameFor(name);
-  if (!id || !folder) return undefined;
+  if (!id || !folder || id === COMMON_AREA.id) return undefined;
   return { id, name, folder };
 }
 
@@ -35,7 +30,7 @@ export function makeFraction(rawName: string): Fraction | undefined {
  */
 export function fractionsForProcess(extras: Fraction[], photos: PhotoRecord[]): Fraction[] {
   const out: Fraction[] = [];
-  const seen = new Set<string>();
+  const seen = new Set<string>([COMMON_AREA.id]); // os espaços comuns não são uma fração da lista
   for (const f of extras) {
     if (seen.has(f.id)) continue;
     out.push(f);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { FRACTION_SUGGESTIONS, fractionsForProcess, inFraction, makeFraction, MAX_FRACTION_NAME } from '../src/fractions.ts';
+import { COMMON_AREA, fractionsForProcess, inFraction, makeFraction, MAX_FRACTION_NAME, scopeOf } from '../src/fractions.ts';
 import { makePhoto } from './helpers.ts';
 
 describe('makeFraction', () => {
@@ -30,9 +30,8 @@ describe('makeFraction', () => {
     assert.equal(makeFraction('Fração A')?.id, makeFraction('  fração  A ')?.id);
   });
 
-  it('as sugestões todas servem', () => {
-    for (const s of FRACTION_SUGGESTIONS) assert.ok(makeFraction(s), s);
-    assert.equal(new Set(FRACTION_SUGGESTIONS.map((s) => makeFraction(s)?.id)).size, FRACTION_SUGGESTIONS.length);
+  it('"Espaços comuns" não pode ser uma fração (já existe à parte)', () => {
+    assert.equal(makeFraction('Espaços comuns'), undefined);
   });
 });
 
@@ -67,5 +66,20 @@ describe('inFraction', () => {
     assert.equal(inFraction(semFracao, 'fracao-a'), false);
     assert.equal(inFraction(naA, 'fracao-a'), true);
     assert.equal(inFraction(naA), false);
+  });
+});
+
+describe('espaços comuns', () => {
+  it('têm pasta própria e usam a lista de divisões dos espaços comuns', () => {
+    assert.deepEqual(COMMON_AREA, { id: 'espacos-comuns', name: 'Espaços comuns', folder: 'Espaços comuns' });
+    assert.equal(scopeOf(COMMON_AREA), 'common');
+    assert.equal(scopeOf(COMMON_AREA.id), 'common');
+    assert.equal(scopeOf({ id: 'fracao-a', name: 'Fração A', folder: 'Fração A' }), 'unit');
+    assert.equal(scopeOf(undefined), 'unit');
+  });
+
+  it('não aparecem na lista das frações, mesmo com fotos', () => {
+    const photo = makePhoto('p1', 1, { fractionId: COMMON_AREA.id, fractionName: COMMON_AREA.name, fractionFolder: COMMON_AREA.folder });
+    assert.deepEqual(fractionsForProcess([], [photo]), []);
   });
 });

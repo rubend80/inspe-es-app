@@ -7,8 +7,8 @@
 // Num prédio, com frações, há uma pasta da fração antes da divisão:
 //   <processo> / 2. Fotos / <fração> / <divisão> / <foto>
 // Exemplo:  2026/02 Fevereiro/260098 - Praça de Portugal 7 Odivelas - Ana Mafalda Leiria
-//             / 2. Fotos / Cozinha / 260098_20261103_143015_007_cozinha.jpg
-//             / 2. Fotos / Fração A / Cozinha / 260098_20261103_143015_008_fracao-a_cozinha.jpg
+//             / 2. Fotos / Cozinha / 20261103_143015.jpg
+//             / 2. Fotos / Fração A / Cozinha / 20261103_143100.jpg
 
 /**
  * Pasta, dentro do processo, onde ficam as fotos da inspeção (as originais, em resolução total).
@@ -89,35 +89,29 @@ export function extFromMime(mime: string): string {
 }
 
 export interface FileNameParts {
-  processId: string;
   takenAt: Date;
-  /** Número de ordem da foto nesse processo e nesse dia (1, 2, 3...). */
-  seq: number;
-  /** Nome da divisão (ex.: "Casa de banho 1"). */
-  division?: string;
-  /** Nome da fração (ex.: "Fração A"), quando o imóvel tem frações. */
-  fraction?: string;
   mimeType?: string;
 }
 
 /**
- * Exemplo: 260098_20261103_143015_007_cozinha.jpg
- * (processo _ data _ hora _ n.º de ordem _ divisão)
- * Com fração: 260098_20261103_143015_008_fracao-a_cozinha.jpg (a fração vem antes da divisão)
- * Os nomes são únicos, o que permite reenviar sem criar duplicados.
+ * Nome da foto: só a data e a hora em que foi tirada. Exemplo: 20261112_151003.jpg
+ * A pasta já diz o processo, a fração e a divisão. Se houver duas fotos no mesmo segundo
+ * na mesma pasta, a segunda fica 20261112_151003_2.jpg (ver uniqueFileName).
  */
 export function buildPhotoFileName(p: FileNameParts): string {
-  const parts = [
-    slugify(p.processId, 40) || 'processo',
-    dayKey(p.takenAt),
-    timeKey(p.takenAt),
-    pad(p.seq, 3),
-  ];
-  const fraction = p.fraction ? slugify(p.fraction) : '';
-  if (fraction) parts.push(fraction);
-  const division = p.division ? slugify(p.division) : '';
-  if (division) parts.push(division);
-  return `${parts.join('_')}.${extFromMime(p.mimeType ?? 'image/jpeg')}`;
+  return `${dayKey(p.takenAt)}_${timeKey(p.takenAt)}.${extFromMime(p.mimeType ?? 'image/jpeg')}`;
+}
+
+/** Garante um nome que ainda não existe na pasta: acrescenta _2, _3... antes da extensão. */
+export function uniqueFileName(fileName: string, taken: ReadonlySet<string>): string {
+  if (!taken.has(fileName)) return fileName;
+  const dot = fileName.lastIndexOf('.');
+  const base = dot > 0 ? fileName.slice(0, dot) : fileName;
+  const ext = dot > 0 ? fileName.slice(dot) : '';
+  for (let n = 2; ; n++) {
+    const candidate = `${base}_${n}${ext}`;
+    if (!taken.has(candidate)) return candidate;
+  }
 }
 
 function joinFolders(...parts: (string | undefined)[]): string {

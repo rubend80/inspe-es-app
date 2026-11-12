@@ -1,66 +1,52 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { divisionHash, parseRoute, processHash } from '../src/routes.ts';
+import { divisionHash, divisionsHash, fractionsHash, parseRoute, processHash } from '../src/routes.ts';
 
 describe('routes', () => {
-  it('reconhece a lista, o processo e a divisão', () => {
+  it('lista, processo, frações', () => {
     assert.deepEqual(parseRoute(''), { name: 'home' });
     assert.deepEqual(parseRoute('#/'), { name: 'home' });
-    assert.deepEqual(parseRoute('#/p/2026-0142'), { name: 'process', processId: '2026-0142' });
-    assert.deepEqual(parseRoute('#/p/2026-0142/cozinha'), {
-      name: 'division',
-      processId: '2026-0142',
-      divisionId: 'cozinha',
-    });
+    assert.deepEqual(parseRoute('#/p/260098'), { name: 'process', processId: '260098' });
+    assert.deepEqual(parseRoute('#/p/260098/fracoes'), { name: 'fractions', processId: '260098' });
   });
 
-  it('ida e volta com caracteres especiais', () => {
-    const hash = divisionHash('RIC 18120/LIS', 'casa-de-banho-1');
-    assert.deepEqual(parseRoute(hash), { name: 'division', processId: 'RIC 18120/LIS', divisionId: 'casa-de-banho-1' });
-    assert.deepEqual(parseRoute(processHash('a b')), { name: 'process', processId: 'a b' });
+  it('fração única: divisões e câmara', () => {
+    assert.deepEqual(parseRoute('#/p/260098/u'), { name: 'divisions', processId: '260098' });
+    assert.deepEqual(parseRoute('#/p/260098/u/cozinha'), { name: 'division', processId: '260098', divisionId: 'cozinha' });
   });
 
-  it('com fração: processo e divisão dentro da fração', () => {
-    assert.deepEqual(parseRoute('#/p/2026-0142/f/fracao-a'), { name: 'process', processId: '2026-0142', fractionId: 'fracao-a' });
-    assert.deepEqual(parseRoute('#/p/2026-0142/f/fracao-a/cozinha'), {
-      name: 'division',
-      processId: '2026-0142',
-      divisionId: 'cozinha',
-      fractionId: 'fracao-a',
-    });
-  });
-
-  it('ida e volta com fração e caracteres especiais', () => {
-    const hash = divisionHash('RIC 18120/LIS', 'casa-de-banho-1', '1-o esq/dto');
-    assert.deepEqual(parseRoute(hash), {
-      name: 'division',
-      processId: 'RIC 18120/LIS',
-      divisionId: 'casa-de-banho-1',
-      fractionId: '1-o esq/dto',
-    });
-    assert.deepEqual(parseRoute(processHash('a b', 'c d')), { name: 'process', processId: 'a b', fractionId: 'c d' });
-  });
-
-  it('sem fração os endereços são os de sempre', () => {
-    assert.equal(processHash('260098'), '#/p/260098');
-    assert.equal(divisionHash('260098', 'cozinha'), '#/p/260098/cozinha');
-    assert.equal(processHash('260098', 'fracao-a'), '#/p/260098/f/fracao-a');
-    assert.equal(divisionHash('260098', 'cozinha', 'fracao-a'), '#/p/260098/f/fracao-a/cozinha');
-  });
-
-  it('uma divisão chamada "f" não se confunde com o prefixo das frações', () => {
-    assert.deepEqual(parseRoute('#/p/260098/f'), { name: 'division', processId: '260098', divisionId: 'f' });
-    assert.deepEqual(parseRoute('#/p/260098/f/fracao-a/f'), {
+  it('fração (ou espaços comuns): divisões e câmara', () => {
+    assert.deepEqual(parseRoute('#/p/260098/f/fracao-a'), { name: 'divisions', processId: '260098', fractionId: 'fracao-a' });
+    assert.deepEqual(parseRoute('#/p/260098/f/espacos-comuns/fachada'), {
       name: 'division',
       processId: '260098',
-      divisionId: 'f',
-      fractionId: 'fracao-a',
+      divisionId: 'fachada',
+      fractionId: 'espacos-comuns',
     });
+  });
+
+  it('os endereços criados voltam a ser lidos igual (com caracteres especiais)', () => {
+    assert.equal(processHash('260098'), '#/p/260098');
+    assert.equal(fractionsHash('260098'), '#/p/260098/fracoes');
+    assert.equal(divisionsHash('260098'), '#/p/260098/u');
+    assert.equal(divisionsHash('260098', 'fracao-a'), '#/p/260098/f/fracao-a');
+    assert.equal(divisionHash('260098', 'ic-1'), '#/p/260098/u/ic-1');
+    assert.deepEqual(parseRoute(divisionHash('A/B 1', 'ic-1', '1.º Esq/Dto')), {
+      name: 'division',
+      processId: 'A/B 1',
+      divisionId: 'ic-1',
+      fractionId: '1.º Esq/Dto',
+    });
+  });
+
+  it('endereço antigo #/p/<processo>/<divisão> = fração única', () => {
+    assert.deepEqual(parseRoute('#/p/260098/cozinha'), { name: 'division', processId: '260098', divisionId: 'cozinha' });
   });
 
   it('endereços estranhos voltam à lista ou ao processo', () => {
     assert.deepEqual(parseRoute('#/qualquer-coisa'), { name: 'home' });
     assert.deepEqual(parseRoute('#/p/%E0%A4%A'), { name: 'home' });
     assert.deepEqual(parseRoute('#/p/abc/%E0%A4%A'), { name: 'process', processId: 'abc' });
+    assert.deepEqual(parseRoute('#/p/abc/x/y/z/w'), { name: 'process', processId: 'abc' });
   });
 });

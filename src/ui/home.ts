@@ -1,4 +1,5 @@
 import type { AppContext } from '../context.ts';
+import { formatPhotoCount } from '../format.ts';
 import { matchesQuery, sortProcessesNewestFirst } from '../processNames.ts';
 import { processHash } from '../routes.ts';
 import type { PhotoRecord, Process } from '../types.ts';
@@ -24,7 +25,7 @@ export function mountHome(root: HTMLElement, ctx: AppContext): () => void {
   const search = h('input', {
     class: 'search',
     type: 'search',
-    placeholder: 'Procurar por n.º, morada ou cliente…',
+    placeholder: 'Procurar pelo n.º do processo…',
     'aria-label': 'Procurar processo por número, morada ou cliente',
     autocomplete: 'off',
     oninput: () => renderList(),
@@ -89,7 +90,9 @@ export function mountHome(root: HTMLElement, ctx: AppContext): () => void {
     if (disposed) return;
     const query = search.value.trim();
     const unsent = new Map<string, number>();
+    const total = new Map<string, number>();
     for (const p of photos) {
+      total.set(p.processId, (total.get(p.processId) ?? 0) + 1);
       if (p.status !== 'sent') unsent.set(p.processId, (unsent.get(p.processId) ?? 0) + 1);
     }
     const matching = sortProcessesNewestFirst(processes.filter((p) => matchesQuery(p, query)));
@@ -124,8 +127,12 @@ export function mountHome(root: HTMLElement, ctx: AppContext): () => void {
             h(
               'span',
               { class: 'p-main' },
-              h('strong', null, p.name),
-              h('small', null, p.client ? `${p.id} · ${p.client}` : p.id),
+              h('strong', null, p.name && p.name !== p.id ? p.name : `Processo ${p.id}`),
+              h(
+                'small',
+                null,
+                p.name && p.name !== p.id ? (p.client ? `${p.id} · ${p.client}` : p.id) : formatPhotoCount(total.get(p.id) ?? 0),
+              ),
             ),
             n > 0 ? h('span', { class: 'badge', title: 'Fotos por guardar' }, String(n)) : null,
           ),

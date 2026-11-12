@@ -289,7 +289,7 @@ describe('PhotoService', () => {
     const rec = await photos.addPhoto(process, cozinha, new Blob(['abc'], { type: 'image/jpeg' }), takenAt);
     await queue.kick();
 
-    assert.equal(rec.fileName, '2026-0142_20261103_143015_001_cozinha.jpg');
+    assert.equal(rec.fileName, '20261103_143015.jpg');
     const saved = await store.get('id-1');
     assert.equal(saved?.divisionId, 'cozinha');
     assert.equal(saved?.divisionName, 'Cozinha');
@@ -315,7 +315,7 @@ describe('PhotoService', () => {
     const rec = await photos.addPhoto(process, cozinha, new Blob(['abc'], { type: 'image/jpeg' }), takenAt, fracaoA);
     await queue.kick();
 
-    assert.equal(rec.fileName, '2026-0142_20261103_143015_001_fracao-a_cozinha.jpg');
+    assert.equal(rec.fileName, '20261103_143015.jpg');
     const saved = await store.get('id-1');
     assert.equal(saved?.fractionId, 'fracao-a');
     assert.equal(saved?.fractionName, 'Fração A');
@@ -363,21 +363,24 @@ describe('PhotoService', () => {
     );
   });
 
-  it('o número de ordem sobe a cada foto do mesmo processo e dia', async () => {
+  it('nome = data e hora; no mesmo segundo e na mesma pasta ganha _2, _3 (noutra pasta não)', async () => {
     const store = new MemoryPhotoStore();
     const queue = new UploadQueue(store, new FakeProvider(), { isOnline: () => false });
     queues.push(queue);
     let n = 0;
     const photos = new PhotoService(store, queue, async () => ({}), () => `id-${++n}`);
-
     const takenAt = new Date(2026, 10, 3, 14, 30, 15);
-    const a = await photos.addPhoto(process, cozinha, new Blob(['1']), takenAt);
-    const b = await photos.addPhoto(process, banho, new Blob(['2']), takenAt);
-    const outro = await photos.addPhoto({ ...process, id: '2026-0143', folder: '2026-0143' }, cozinha, new Blob(['3']), takenAt);
-
-    assert.match(a.fileName, /_001_cozinha\.jpg$/);
-    assert.match(b.fileName, /_002_casa-de-banho-1\.jpg$/);
-    assert.match(outro.fileName, /_001_cozinha\.jpg$/);
+    // tiradas em rajada, sem esperar umas pelas outras
+    const [a, b, c] = await Promise.all([
+      photos.addPhoto(process, cozinha, new Blob(['1']), takenAt),
+      photos.addPhoto(process, cozinha, new Blob(['2']), takenAt),
+      photos.addPhoto(process, cozinha, new Blob(['3']), takenAt),
+    ]);
+    const outraPasta = await photos.addPhoto(process, banho, new Blob(['4']), takenAt);
+    const outroProcesso = await photos.addPhoto({ ...process, id: '2026-0143', folder: '2026-0143' }, cozinha, new Blob(['5']), takenAt);
+    assert.deepEqual([a.fileName, b.fileName, c.fileName], ['20261103_143015.jpg', '20261103_143015_2.jpg', '20261103_143015_3.jpg']);
+    assert.equal(outraPasta.fileName, '20261103_143015.jpg');
+    assert.equal(outroProcesso.fileName, '20261103_143015.jpg');
   });
 
   it('a foto fica guardada mesmo sem rede', async () => {

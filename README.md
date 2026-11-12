@@ -8,42 +8,29 @@ A ligação ao SharePoint/OneDrive fica para mais tarde e só mexe numa peça (v
 
 ## Como se usa
 
-1. **Primeira vez:** a app pede para **escolher a pasta do telemóvel** onde guardar tudo (botão "Escolher pasta").
-   O Android abre o seletor de pastas: crie uma pasta nova, por exemplo `Inspeções`, dentro de Documentos, entre nela
-   e toque em "Utilizar esta pasta". (Se o Chrome recusar uma pasta como Documentos ou Transferências, o que costuma
-   acontecer com pastas do sistema, use uma subpasta própria.) Essa pasta vê-se na app Ficheiros do telemóvel.
-2. **Novo processo:** na lista, "+ Novo processo" pede o n.º, a morada e (opcional) o cliente, e cria a pasta com o
-   nome `<n.º> - <morada> - <cliente>`, como na biblioteca. Mostra o nome da pasta antes de criar. Enquanto o processo
-   não tiver fotos, pode ser removido da lista (engano no n.º ou na morada).
-3. **Lista de processos**, os mais recentes primeiro, com pesquisa por n.º, morada ou cliente (sem se preocupar com
-   acentos ou maiúsculas). Cada processo mostra quantas fotos ainda estão por guardar.
-4. **Abrir um processo** → em cima aparecem as **frações** e por baixo as divisões da casa:
-   Hall, Sala, Cozinha, Quarto 1, Quarto 2, Quarto 3, Casa de banho 1, Casa de banho 2, Garagem.
-   Cada uma mostra quantas fotos já tem.
-5. **Frações (prédios):** antes de escolher a divisão, "+ Fração" acrescenta uma fração (apartamento) ao processo:
-   "Fração A", "1.º Esq.", "Partes comuns"… Ao escolher uma fração, as divisões e os números passam a ser **dessa fração**
-   e as fotos ficam em `2. Fotos/<fração>/<divisão>/`. "Sem fração" (a de origem) é o que sempre houve: as fotos ficam
-   logo em `2. Fotos/<divisão>/`, para moradias ou para o que é de todo o prédio. As frações de um processo ficam
-   guardadas nele; uma fração criada por engano remove-se enquanto não tiver fotos.
-6. **Tocar numa divisão** → abre a câmara já dentro dessa pasta (e dessa fração). O atalho "Próxima: Quarto 1 →"
-   passa à divisão seguinte, na mesma fração, sem voltar atrás.
-7. **"Outra divisão"** → para o que não está na lista (fachada, cobertura, varanda, arrecadação…).
-   Fica guardada nesse processo (para todas as frações), com a sua própria pasta.
+1. **Novo processo:** só o número (ex.: `260098`). A pasta do processo tem esse nome.
+2. **Abrir o processo** → três opções:
+   - **Espaços comuns** → Fachada, Cobertura, Terraço, Garagem e "Outro espaço" para acrescentar mais.
+     Fotos em `<processo>/2. Fotos/Espaços comuns/<espaço>/`.
+   - **Frações** → começa vazia; cada fração acrescenta-se à mão ("Adicionar fração"). Ao abrir uma fração aparecem as
+     divisões. Fotos em `<processo>/2. Fotos/<fração>/<divisão>/`. Uma fração sem fotos pode ser removida.
+   - **Fração única** (moradia ou um só apartamento) → as divisões, sem pasta de fração.
+     Fotos em `<processo>/2. Fotos/<divisão>/`.
+3. **Divisões de uma fração (e da fração única):** Hall, Sala, Cozinha, Quarto 1 a 4, IC 1, IC 2, Arrumos, Sótão,
+   Garagem, e "Outra divisão" para acrescentar mais.
+4. **Tocar numa divisão** → câmara já dentro dessa pasta. "Próxima: … →" passa à divisão seguinte.
+5. **Nome das fotos:** só a data e a hora, `20261112_151003.jpg`. Se houver duas fotos do mesmo segundo na mesma
+   pasta, a segunda fica `20261112_151003_2.jpg`. A app nunca escreve por cima de outra foto.
 
 O que fica no telemóvel, por exemplo:
 
 ```
-Documentos / Inspeções /                                  <- a pasta escolhida
-    260098 - Praça de Portugal 7 Odivelas - Ana Exemplo /
-        2. Fotos /
-            Cozinha / 260098_20261103_143015_001_cozinha.jpg      (original, máxima qualidade)
-            Fração A /                                            (só em prédios com frações)
-                Cozinha / 260098_20261103_143100_002_fracao-a_cozinha.jpg
+Documents / Inspeções / 260098 /
+    2. Fotos /
+        Espaços comuns / Fachada / 20261112_150201.jpg
+        Fração A / Cozinha / 20261112_151003.jpg
+        Sala / 20261112_152410.jpg                    (fração única)
 ```
-
-A app só cria a pasta `2. Fotos`. As outras (`0.`, `1.`, `3.` a `7.`) não são criadas.
-Para passar para a biblioteca, copiar o conteúdo dessa pasta para as pastas com o mesmo nome do processo
-(os nomes dos ficheiros são únicos, por isso juntar não substitui nada).
 
 Por baixo:
 

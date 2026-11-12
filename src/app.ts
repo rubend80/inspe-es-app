@@ -3,20 +3,24 @@ import { SESSION_KEY } from './ui/nativeSession.ts';
 import type { NativeSession } from './ui/nativeSession.ts';
 import type { AppContext } from './context.ts';
 import { divisionsForProcess, makeDivision } from './divisions.ts';
-import { fractionsForProcess, inFraction, makeFraction } from './fractions.ts';
+import type { DivisionScope } from './divisions.ts';
+import { COMMON_AREA, fractionsForProcess, inFraction, makeFraction, scopeOf } from './fractions.ts';
 import { PhotoService } from './photoService.ts';
 import { UploadQueue } from './queue.ts';
-import { divisionHash, homeHash, parseRoute, processHash } from './routes.ts';
+import { divisionHash, divisionsHash, fractionsHash, homeHash, parseRoute } from './routes.ts';
 import { IdbPhotoStore } from './storage/idb.ts';
 import { createStorage } from './storage/index.ts';
 import type { Division, Fraction, Process } from './types.ts';
 import { mountCapture } from './ui/capture.ts';
 import { mountHome } from './ui/home.ts';
 import { mountProcess } from './ui/process.ts';
+import { mountFractions } from './ui/fractionsList.ts';
+import { mountDivisions } from './ui/divisionsScreen.ts';
 import { processImage } from './ui/image.ts';
 
 const PROCESSES_KEY = 'processes';
-const extraDivisionsKey = (processId: string): string => `divisions:${processId}`;
+const extraDivisionsKey = (processId: string, scope: DivisionScope = 'unit'): string =>
+  scope === 'common' ? `divisions-common:${processId}` : `divisions:${processId}`;
 const extraFractionsKey = (processId: string): string => `fractions:${processId}`;
 
 export function startApp(root: HTMLElement): void {
@@ -60,17 +64,18 @@ export function startApp(root: HTMLElement): void {
       return (await ctx.loadProcesses()).processes.find((p) => p.id === id);
     },
     divisions: {
-      async list(processId) {
-        const extras = (await store.getMeta<Division[]>(extraDivisionsKey(processId))) ?? [];
-        return divisionsForProcess(extras, await store.listByProcess(processId));
+      async list(processId, scope = 'unit') {
+        const extras = (await store.getMeta<Division[]>(extraDivisionsKey(processId, scope))) ?? [];
+        const photos = (await store.listByProcess(processId)).filter((p) => scopeOf(p.fractionId) === scope);
+        return divisionsForProcess(extras, photos, scope);
       },
-      async add(processId, name) {
+      async add(processId, name, scope = 'unit') {
         const made = makeDivision(name);
         if (!made) return undefined;
-        const existing = (await ctx.divisions.list(processId)).find((d) => d.id === made.id);
+        const existing = (await ctx.divisions.list(processId, scope)).find((d) => d.id === made.id);
         if (existing) return existing;
-        const extras = (await store.getMeta<Division[]>(extraDivisionsKey(processId))) ?? [];
-        await store.setMeta(extraDivisionsKey(processId), [...extras, made]);
+        const extras = (await store.getMeta<Division[]>(extraDivisionsKey(processId, scope))) ?? [];
+        await store.setMeta(extraDivisionsKey(processId, scope), [...extras, made]);
         return made;
       },
     },
@@ -135,25 +140,37 @@ export function startApp(root: HTMLElement): void {
       location.replace(homeHash()); // processo desconhecido: volta à lista
       return;
     }
+    if (route.name === 'process') {
+      unmount = mountProcess(root, ctx, process);
+      return;
+    }
+    if (route.name === 'fractions') {
+      unmount = mountFractions(root, ctx, process);
+      return;
+    }
+
     let fraction: Fraction | undefined;
     if (route.fractionId) {
-      fraction = (await ctx.fractions.list(process.id)).find((f) => f.id === route.fractionId);
+      fraction =
+        route.fractionId === COMMON_AREA.id
+          ? COMMON_AREA
+          : (await ctx.fractions.list(process.id)).find((f) => f.id === route.fractionId);
       if (mine !== token) return;
       if (!fraction) {
-        location.replace(processHash(process.id)); // fração desconhecida: volta ao processo
+        location.replace(fractionsHash(process.id)); // fração desconhecida: volta à lista das frações
         return;
       }
     }
 
-    if (route.name === 'process') {
-      unmount = mountProcess(root, ctx, process, fraction);
+    if (route.name === 'divisions') {
+      unmount = mountDivisions(root, ctx, process, fraction);
       return;
     }
 
-    const division = (await ctx.divisions.list(process.id)).find((d) => d.id === route.divisionId);
+    const division = (await ctx.divisions.list(process.id, scopeOf(fraction))).find((d) => d.id === route.divisionId);
     if (mine !== token) return;
     if (!division) {
-      location.replace(processHash(process.id, fraction?.id)); // divisão desconhecida: volta às divisões
+      location.replace(divisionsHash(process.id, fraction?.id)); // divisão desconhecida: volta às divisões
       return;
     }
     unmount = mountCapture(root, ctx, process, division, fraction);

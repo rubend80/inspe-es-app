@@ -18,6 +18,7 @@ export interface WritableLike {
 }
 export interface FileHandleLike {
   createWritable(): Promise<WritableLike>;
+  getFile?(): Promise<Blob>;
 }
 export interface DirHandleLike {
   readonly name: string;

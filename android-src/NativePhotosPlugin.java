@@ -183,11 +183,15 @@ public class NativePhotosPlugin extends Plugin {
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), folder);
         if (!dir.exists() && !dir.mkdirs()) throw new IOException("Não foi possível criar a pasta " + dir);
         File file = new File(dir, fileName);
+        int dot = fileName.lastIndexOf('.');
+        String base = dot > 0 ? fileName.substring(0, dot) : fileName;
+        String ext = dot > 0 ? fileName.substring(dot) : "";
+        for (int n = 2; file.exists(); n++) file = new File(dir, base + "_" + n + ext); // nunca por cima de outra foto
         try (OutputStream out = new FileOutputStream(file)) {
             pipe(in, out);
         }
         MediaScannerConnection.scanFile(getContext(), new String[] { file.getAbsolutePath() }, new String[] { mime }, null);
-        return Environment.DIRECTORY_DOCUMENTS + "/" + folder + "/" + fileName;
+        return Environment.DIRECTORY_DOCUMENTS + "/" + folder + "/" + file.getName();
     }
 
     private String insertAndWrite(ContentResolver resolver, Uri collection, String top, String folder, String fileName,
@@ -209,7 +213,14 @@ public class NativePhotosPlugin extends Plugin {
         ContentValues done = new ContentValues();
         done.put(MediaStore.MediaColumns.IS_PENDING, 0);
         resolver.update(target, done, null, null);
-        return top + "/" + folder + "/" + fileName;
+        // Se já existia um ficheiro com o mesmo nome, o Android dá outro nome (ex.: "... (1).jpg"): devolve o verdadeiro.
+        String actual = fileName;
+        try (Cursor c = resolver.query(target, new String[] { MediaStore.MediaColumns.DISPLAY_NAME }, null, null, null)) {
+            if (c != null && c.moveToFirst() && c.getString(0) != null) actual = c.getString(0);
+        } catch (Exception ignored) {
+            // fica o nome pedido
+        }
+        return top + "/" + folder + "/" + actual;
     }
 
     private static void pipe(InputStream in, OutputStream out) throws IOException {

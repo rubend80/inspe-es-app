@@ -1,3 +1,4 @@
+import type { DivisionScope } from './divisions.ts';
 import type { LocalProcessList } from './localProcesses.ts';
 import type { PhotoService } from './photoService.ts';
 import type { UploadQueue } from './queue.ts';
@@ -26,9 +27,9 @@ export interface AppContext {
   findProcess(id: string): Promise<Process | undefined>;
   divisions: {
     /** Divisões do processo: as de origem, as acrescentadas pelo inspetor e as que já têm fotos. */
-    list(processId: string): Promise<Division[]>;
+    list(processId: string, scope?: DivisionScope): Promise<Division[]>;
     /** Acrescenta uma divisão a este processo (ou devolve a que já existe com esse nome). */
-    add(processId: string, name: string): Promise<Division | undefined>;
+    add(processId: string, name: string, scope?: DivisionScope): Promise<Division | undefined>;
   };
   fractions: {
     /** Frações do processo (apartamentos de um prédio): as acrescentadas pelo inspetor e as que já têm fotos. */

@@ -1,34 +1,43 @@
 import { folderNameFor, slugify } from './naming.ts';
 import type { Division, PhotoRecord } from './types.ts';
 
-/** Divisões que aparecem em todos os processos, por esta ordem. */
-export const DEFAULT_DIVISIONS: readonly Division[] = [
-  { id: 'hall', name: 'Hall', folder: 'Hall' },
-  { id: 'sala', name: 'Sala', folder: 'Sala' },
-  { id: 'cozinha', name: 'Cozinha', folder: 'Cozinha' },
-  { id: 'quarto-1', name: 'Quarto 1', folder: 'Quarto 1' },
-  { id: 'quarto-2', name: 'Quarto 2', folder: 'Quarto 2' },
-  { id: 'quarto-3', name: 'Quarto 3', folder: 'Quarto 3' },
-  { id: 'casa-de-banho-1', name: 'Casa de banho 1', folder: 'Casa de banho 1' },
-  { id: 'casa-de-banho-2', name: 'Casa de banho 2', folder: 'Casa de banho 2' },
-  { id: 'garagem', name: 'Garagem', folder: 'Garagem' },
+/** "unit" = divisões de uma fração (ou da fração única); "common" = espaços comuns do prédio. */
+export type DivisionScope = 'unit' | 'common';
+
+const d = (name: string, id: string): Division => ({ id, name, folder: name });
+
+/** Divisões de cada fração (e da fração única), por esta ordem. */
+export const UNIT_DIVISIONS: readonly Division[] = [
+  d('Hall', 'hall'),
+  d('Sala', 'sala'),
+  d('Cozinha', 'cozinha'),
+  d('Quarto 1', 'quarto-1'),
+  d('Quarto 2', 'quarto-2'),
+  d('Quarto 3', 'quarto-3'),
+  d('Quarto 4', 'quarto-4'),
+  d('IC 1', 'ic-1'),
+  d('IC 2', 'ic-2'),
+  d('Arrumos', 'arrumos'),
+  d('Sótão', 'sotao'),
+  d('Garagem', 'garagem'),
 ];
 
-/** Sugestões ao acrescentar uma divisão que não está na lista (fachada, cobertura, varanda...). */
-export const DIVISION_SUGGESTIONS = [
-  'Fachada',
-  'Cobertura',
-  'Varanda',
-  'Arrecadação',
-  'Sótão',
-  'Escadas',
-  'Corredor',
-  'Quarto 4',
-  'Casa de banho 3',
-  'Exterior',
-  'Cave',
-  'Quintal',
+/** Divisões dos espaços comuns. */
+export const COMMON_DIVISIONS: readonly Division[] = [
+  d('Fachada', 'fachada'),
+  d('Cobertura', 'cobertura'),
+  d('Terraço', 'terraco'),
+  d('Garagem', 'garagem'),
 ];
+
+export const defaultDivisions = (scope: DivisionScope): readonly Division[] =>
+  scope === 'common' ? COMMON_DIVISIONS : UNIT_DIVISIONS;
+
+/** Sugestões ao acrescentar uma divisão que não está na lista. */
+export const DIVISION_SUGGESTIONS: Record<DivisionScope, string[]> = {
+  unit: ['Quarto 5', 'IC 3', 'Varanda', 'Corredor', 'Despensa', 'Lavandaria', 'Escritório', 'Marquise', 'Cave', 'Quintal'],
+  common: ['Escadas', 'Hall de entrada', 'Elevador', 'Logradouro', 'Arrecadações', 'Cave', 'Empenas', 'Caixa de escadas'],
+};
 
 /** Cria uma divisão a partir de um nome escrito pelo inspetor. Devolve undefined se o nome não servir. */
 export function makeDivision(rawName: string): Division | undefined {
@@ -42,11 +51,11 @@ export function makeDivision(rawName: string): Division | undefined {
 }
 
 /**
- * Divisões de um processo: as de origem, as acrescentadas pelo inspetor e, por segurança,
- * qualquer divisão que já tenha fotos (para nunca ficarem fotos "escondidas").
+ * Divisões de um processo (de um tipo): as de origem, as acrescentadas pelo inspetor e, por segurança,
+ * qualquer divisão que já tenha fotos desse tipo (para nunca ficarem fotos "escondidas").
  */
-export function divisionsForProcess(extras: Division[], photos: PhotoRecord[]): Division[] {
-  const out: Division[] = [...DEFAULT_DIVISIONS];
+export function divisionsForProcess(extras: Division[], photos: PhotoRecord[], scope: DivisionScope = 'unit'): Division[] {
+  const out: Division[] = [...defaultDivisions(scope)];
   const seen = new Set(out.map((d) => d.id));
   for (const d of extras) {
     if (seen.has(d.id)) continue;

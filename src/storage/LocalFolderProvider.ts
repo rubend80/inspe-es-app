@@ -1,5 +1,5 @@
 import type { Process } from '../types.ts';
-import type { FolderAccess, FolderState } from './folderAccess.ts';
+import type { DirHandleLike, FolderAccess, FolderState } from './folderAccess.ts';
 import { UploadError } from './StorageProvider.ts';
 import type { StorageProvider, UploadRequest, UploadResult } from './StorageProvider.ts';
 
@@ -32,10 +32,14 @@ export class LocalFolderProvider implements StorageProvider {
       throw new UploadError(notReadyMessage(state), { retryable: state !== 'unsupported' });
     }
 
+    let fileName = req.fileName;
     try {
       let dir = root;
       for (const segment of segments) dir = await dir.getDirectoryHandle(segment, { create: true });
-      const file = await dir.getFileHandle(req.fileName, { create: true });
+      // Nunca escrever por cima de outra foto (ex.: a app foi limpa e há uma foto do mesmo segundo).
+      // Se já lá estiver um ficheiro com o mesmo tamanho, é esta mesma foto (nova tentativa): escreve por cima.
+      fileName = await freeNameIn(dir, req.fileName, req.blob.size);
+      const file = await dir.getFileHandle(fileName, { create: true });
       const writable = await file.createWritable();
       try {
         await writable.write(req.blob);
@@ -47,7 +51,7 @@ export class LocalFolderProvider implements StorageProvider {
     } catch (err) {
       throw friendlyError(err);
     }
-    return { remotePath: `${req.folder}/${req.fileName}` };
+    return { remotePath: `${req.folder}/${fileName}` };
   }
 }
 
@@ -77,4 +81,22 @@ function friendlyError(err: unknown): Error {
     default:
       return err instanceof Error ? err : new Error(String(err));
   }
+}
+
+async function freeNameIn(dir: DirHandleLike, fileName: string, size: number): Promise<string> {
+  const dot = fileName.lastIndexOf('.');
+  const base = dot > 0 ? fileName.slice(0, dot) : fileName;
+  const ext = dot > 0 ? fileName.slice(dot) : '';
+  for (let n = 1; n < 1000; n++) {
+    const candidate = n === 1 ? fileName : `${base}_${n}${ext}`;
+    let existing: Blob | undefined;
+    try {
+      const handle = await dir.getFileHandle(candidate);
+      existing = handle.getFile ? await handle.getFile() : undefined;
+    } catch {
+      return candidate; // não existe: livre
+    }
+    if (!existing || existing.size === size) return candidate;
+  }
+  return fileName;
 }

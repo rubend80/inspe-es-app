@@ -1,8 +1,8 @@
 import type { AppContext } from '../context.ts';
 import { nextDivision } from '../divisions.ts';
 import { formatPhotoCount, formatResolution, STATUS_LABEL } from '../format.ts';
-import { divisionHash, processHash } from '../routes.ts';
-import { inFraction } from '../fractions.ts';
+import { divisionHash, divisionsHash } from '../routes.ts';
+import { inFraction, scopeOf } from '../fractions.ts';
 import type { Division, Fraction, PhotoRecord, Process } from '../types.ts';
 import {
   describeRange,
@@ -89,7 +89,7 @@ export function mountCapture(
   let wantedZoom: ZoomLevel = savedZoom();
   let renderSeq = 0;
   let urls: string[] = [];
-  let nextTarget = processHash(process.id, fraction?.id);
+  let nextTarget = divisionsHash(process.id, fraction?.id);
 
   const pill = createStatusPill(ctx);
   const banner = createStorageBanner(ctx);
@@ -197,12 +197,12 @@ export function mountCapture(
     h(
       'header',
       { class: 'topbar' },
-      h('a', { class: 'back', href: processHash(process.id, fraction?.id), 'aria-label': 'Voltar às divisões' }, '←'),
+      h('a', { class: 'back', href: divisionsHash(process.id, fraction?.id), 'aria-label': 'Voltar às divisões' }, '←'),
       h(
         'div',
         { class: 'title-block' },
         h('strong', null, division.name),
-        h('small', null, fraction ? `${fraction.name} · ${process.id} · ${process.name}` : `${process.id} · ${process.name}`),
+        h('small', null, `Processo ${process.id} · ${fraction ? fraction.name : 'Fração única'}`),
       ),
       pill.el,
     ),
@@ -549,14 +549,14 @@ export function mountCapture(
   const unsubscribe = ctx.queue.subscribe(() => void renderGrid());
 
   // Ligação rápida para a divisão seguinte (ou para concluir, na última).
-  void ctx.divisions.list(process.id).then((list) => {
+  void ctx.divisions.list(process.id, scopeOf(fraction)).then((list) => {
     if (disposed) return;
     const next = nextDivision(list, division.id);
     if (next) {
       nextTarget = divisionHash(process.id, next.id, fraction?.id);
       nextLink.textContent = `Próxima: ${next.name} →`;
     } else {
-      nextTarget = processHash(process.id, fraction?.id);
+      nextTarget = divisionsHash(process.id, fraction?.id);
       nextLink.textContent = 'Concluir';
     }
     nextLink.setAttribute('href', nextTarget);

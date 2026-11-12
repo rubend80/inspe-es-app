@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   buildPhotoFileName,
+  uniqueFileName,
   dayKey,
   extFromMime,
   fitWithin,
@@ -57,53 +58,31 @@ describe('datas', () => {
   });
 });
 
-describe('buildPhotoFileName', () => {
+describe('buildPhotoFileName (só data e hora)', () => {
   const takenAt = new Date(2026, 10, 3, 14, 30, 15);
 
-  it('segue a convenção processo_data_hora_ordem_divisão', () => {
-    const name = buildPhotoFileName({ processId: '260098', takenAt, seq: 7, division: 'Cozinha' });
-    assert.equal(name, '260098_20261103_143015_007_cozinha.jpg');
-  });
-
-  it('usa o nome da divisão, sem acentos nem espaços', () => {
-    const name = buildPhotoFileName({ processId: '2026-0142', takenAt, seq: 1, division: 'Casa de banho 1' });
-    assert.equal(name, '2026-0142_20261103_143015_001_casa-de-banho-1.jpg');
-  });
-
-  it('omite a divisão quando não há', () => {
-    const name = buildPhotoFileName({ processId: '2026-0142', takenAt, seq: 12 });
-    assert.equal(name, '2026-0142_20261103_143015_012.jpg');
+  it('o nome é a data e a hora', () => {
+    assert.equal(buildPhotoFileName({ takenAt }), '20261103_143015.jpg');
   });
 
   it('usa a extensão certa para o tipo de imagem', () => {
     assert.equal(extFromMime('image/png'), 'png');
     assert.equal(extFromMime('image/jpeg'), 'jpg');
     assert.equal(extFromMime('qualquer/coisa'), 'jpg');
-    const name = buildPhotoFileName({ processId: 'P1', takenAt, seq: 1, mimeType: 'image/webp' });
-    assert.ok(name.endsWith('.webp'));
-  });
-
-  it('nunca produz caracteres proibidos no SharePoint', () => {
-    const name = buildPhotoFileName({ processId: 'A/B:C*D', takenAt, seq: 1, division: 'Sala "grande" <1>' });
-    assert.doesNotMatch(name, /["*:<>?/\\|]/);
+    assert.equal(buildPhotoFileName({ takenAt, mimeType: 'image/webp' }), '20261103_143015.webp');
   });
 });
 
-describe('nome do ficheiro com fração', () => {
-  const takenAt = new Date(2026, 10, 3, 14, 30, 15);
-
-  it('a fração vem antes da divisão', () => {
-    const name = buildPhotoFileName({ processId: '260098', takenAt, seq: 8, division: 'Cozinha', fraction: 'Fração A' });
-    assert.equal(name, '260098_20261103_143015_008_fracao-a_cozinha.jpg');
+describe('uniqueFileName', () => {
+  it('fica igual se o nome estiver livre', () => {
+    assert.equal(uniqueFileName('20261103_143015.jpg', new Set()), '20261103_143015.jpg');
   });
 
-  it('com nomes como "1.º Esq."', () => {
-    const name = buildPhotoFileName({ processId: '260098', takenAt, seq: 1, division: 'Sala', fraction: '1.º Esq.' });
-    assert.equal(name, '260098_20261103_143015_001_1-o-esq_sala.jpg');
-  });
-
-  it('sem fração o nome é o de sempre', () => {
-    assert.equal(buildPhotoFileName({ processId: '260098', takenAt, seq: 7, division: 'Cozinha' }), '260098_20261103_143015_007_cozinha.jpg');
+  it('duas fotos no mesmo segundo: _2, _3...', () => {
+    const taken = new Set(['20261103_143015.jpg']);
+    assert.equal(uniqueFileName('20261103_143015.jpg', taken), '20261103_143015_2.jpg');
+    taken.add('20261103_143015_2.jpg');
+    assert.equal(uniqueFileName('20261103_143015.jpg', taken), '20261103_143015_3.jpg');
   });
 });
 

@@ -1,4 +1,4 @@
-import { buildPhotoFileName, dayKey, remoteFolderFor } from './naming.ts';
+import { buildPhotoFileName, remoteFolderFor, uniqueFileName } from './naming.ts';
 import type { UploadQueue } from './queue.ts';
 import type { PhotoStore } from './storage/PhotoStore.ts';
 import type { Division, Fraction, PhotoRecord, Process } from './types.ts';
@@ -39,34 +39,8 @@ export class PhotoService {
     takenAt: Date = new Date(),
     fraction?: Fraction,
   ): Promise<PhotoRecord> {
-    const seq = await this.store.nextSequence(process.id, dayKey(takenAt));
-    const mimeType = blob.type || 'image/jpeg';
-    const record: PhotoRecord = {
-      id: this.newId(),
-      processId: process.id,
-      processName: process.name,
-      processFolder: process.folder,
-      divisionId: division.id,
-      divisionName: division.name,
-      divisionFolder: division.folder,
-      ...(fraction ? { fractionId: fraction.id, fractionName: fraction.name, fractionFolder: fraction.folder } : {}),
-      fileName: buildPhotoFileName({
-        processId: process.id,
-        takenAt,
-        seq,
-        division: division.name,
-        ...(fraction ? { fraction: fraction.name } : {}),
-        mimeType,
-      }),
-      takenAt: takenAt.getTime(),
-      mimeType,
-      size: blob.size,
-      status: 'pending',
-      attempts: 0,
-      blob,
-    };
-    // 1.º guardar (a foto fica segura de imediato); miniatura, pré-visualização e dimensões vêm depois.
-    await this.queue.enqueue(record);
+    // Nome e gravação um de cada vez (nomes únicos); a miniatura faz-se depois, sem atrasar a foto seguinte.
+    const record = await this.oneAtATime(() => this.addPhotoNow(process, division, blob, takenAt, fraction));
     const info = await this.processImage(blob);
     const patch: Partial<PhotoRecord> = {};
     if (info.thumb) patch.thumb = info.thumb;
@@ -82,6 +56,55 @@ export class PhotoService {
     return record;
   }
 
+  /** Fotos tiradas seguidas são registadas uma a uma, para nunca terem o mesmo nome na mesma pasta. */
+  private chain: Promise<unknown> = Promise.resolve();
+  private oneAtATime<T>(task: () => Promise<T>): Promise<T> {
+    const run = this.chain.then(task, task);
+    this.chain = run.catch(() => undefined);
+    return run;
+  }
+
+  /** Nome livre na pasta onde a foto vai ficar (data_hora, e _2, _3... se houver outra no mesmo segundo). */
+  private async freeName(process: Process, division: Division, fraction: Fraction | undefined, takenAt: Date, mimeType: string): Promise<string> {
+    const folder = remoteFolderFor(process.folder, division.folder, fraction?.folder);
+    const taken = new Set(
+      (await this.store.listByProcess(process.id))
+        .filter((p) => remoteFolderFor(p.processFolder, p.divisionFolder, p.fractionFolder) === folder)
+        .map((p) => p.fileName),
+    );
+    return uniqueFileName(buildPhotoFileName({ takenAt, mimeType }), taken);
+  }
+
+  private async addPhotoNow(
+    process: Process,
+    division: Division,
+    blob: Blob,
+    takenAt: Date,
+    fraction?: Fraction,
+  ): Promise<PhotoRecord> {
+    const mimeType = blob.type || 'image/jpeg';
+    const record: PhotoRecord = {
+      id: this.newId(),
+      processId: process.id,
+      processName: process.name,
+      processFolder: process.folder,
+      divisionId: division.id,
+      divisionName: division.name,
+      divisionFolder: division.folder,
+      ...(fraction ? { fractionId: fraction.id, fractionName: fraction.name, fractionFolder: fraction.folder } : {}),
+      fileName: await this.freeName(process, division, fraction, takenAt, mimeType),
+      takenAt: takenAt.getTime(),
+      mimeType,
+      size: blob.size,
+      status: 'pending',
+      attempts: 0,
+      blob,
+    };
+    // 1.º guardar (a foto fica segura de imediato); miniatura, pré-visualização e dimensões vêm depois.
+    await this.queue.enqueue(record);
+    return record;
+  }
+
   /**
    * Foto que já foi gravada diretamente na pasta (app Android: copiada da galeria, tal e qual).
    * Dá-lhe o nome e a pasta de sempre, chama saveTo(pasta, nome) para a gravar e regista-a como "Guardada".
@@ -93,15 +116,8 @@ export class PhotoService {
     info: { takenAt: Date; mimeType: string; size: number; width?: number; height?: number },
     saveTo: (folder: string, fileName: string) => Promise<string>,
   ): Promise<PhotoRecord> {
-    const seq = await this.store.nextSequence(process.id, dayKey(info.takenAt));
-    const fileName = buildPhotoFileName({
-      processId: process.id,
-      takenAt: info.takenAt,
-      seq,
-      division: division.name,
-      ...(fraction ? { fraction: fraction.name } : {}),
-      mimeType: info.mimeType,
-    });
+    return this.oneAtATime(async () => {
+    const fileName = await this.freeName(process, division, fraction, info.takenAt, info.mimeType);
     const remotePath = await saveTo(remoteFolderFor(process.folder, division.folder, fraction?.folder), fileName);
     const record: PhotoRecord = {
       id: this.newId(),
@@ -124,6 +140,7 @@ export class PhotoService {
     await this.store.add(record);
     this.queue.notify();
     return record;
+    });
   }
 
   /** Junta a miniatura e a pré-visualização a uma foto já registada. */

@@ -1,5 +1,5 @@
 import type { AppContext } from '../context.ts';
-import { FRACTION_SUGGESTIONS, MAX_FRACTION_NAME } from '../fractions.ts';
+import { MAX_FRACTION_NAME } from '../fractions.ts';
 import type { Fraction, Process } from '../types.ts';
 import { h, toast } from './dom.ts';
 
@@ -11,7 +11,6 @@ export function openAddFractionDialog(ctx: AppContext, process: Process, onAdded
     placeholder: 'Nome da fração (ex.: Fração A, 1.º Esq.)',
     'aria-label': 'Nome da fração',
     name: 'fracao',
-    list: 'fraction-suggestions',
     autocomplete: 'off',
     maxLength: MAX_FRACTION_NAME,
     onkeydown: (e: Event) => {
@@ -24,7 +23,7 @@ export function openAddFractionDialog(ctx: AppContext, process: Process, onAdded
   async function submit(): Promise<void> {
     const fraction = await ctx.fractions.add(process.id, input.value);
     if (!fraction) {
-      toast('Indique um nome para a fração.');
+      toast('Indique um nome para a fração (já existe ou está vazio?).');
       return;
     }
     close();
@@ -36,10 +35,9 @@ export function openAddFractionDialog(ctx: AppContext, process: Process, onAdded
     h(
       'p',
       { class: 'hint' },
-      'Para prédios com várias frações. As fotos ficam numa pasta com este nome, dentro de “2. Fotos”, e depois escolhe a divisão.',
+      'As fotos desta fração ficam numa pasta com este nome, dentro de “2. Fotos”.',
     ),
     input,
-    h('datalist', { id: 'fraction-suggestions' }, ...FRACTION_SUGGESTIONS.map((s) => h('option', { value: s }))),
     h(
       'div',
       { class: 'dlg-actions' },
