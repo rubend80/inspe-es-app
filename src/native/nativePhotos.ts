@@ -27,6 +27,8 @@ export interface NativePhotosPlugin {
   copy(options: { uri: string; folder: string; fileName: string; mime: string }): Promise<{ path: string }>;
   /** Escreve um ficheiro (base64) em Documents/<folder>/<fileName>. Devolve o caminho. */
   writeFile(options: { folder: string; fileName: string; mime: string; data: string }): Promise<{ path: string }>;
+  /** Apaga Documents/<folder> e tudo o que tem dentro (as fotos copiadas pela app). */
+  deleteFolder(options: { folder: string }): Promise<{ deleted: number; failed: number }>;
   /** Miniatura JPEG (base64) de uma foto da galeria. */
   thumbnail(options: { uri: string; size: number }): Promise<{ data: string }>;
 }

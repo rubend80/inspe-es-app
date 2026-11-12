@@ -5,7 +5,7 @@ import { COMMON_AREA, inFraction } from '../fractions.ts';
 import { divisionsHash, fractionsHash, homeHash } from '../routes.ts';
 import { summarize, unsentCount } from '../summary.ts';
 import type { Fraction, PhotoRecord, Process } from '../types.ts';
-import { h } from './dom.ts';
+import { h, toast } from './dom.ts';
 import { createStatusPill } from './statusPill.ts';
 import { createStorageBanner } from './storageBanner.ts';
 
@@ -81,16 +81,23 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
     );
   }
 
-  /** Tira o processo da app (lista, fotos registadas, frações e divisões). Os ficheiros já guardados ficam no telemóvel. */
+  /** Elimina o processo: da app (lista, fotos, frações, divisões) e a pasta dele no telemóvel, com as fotos. */
   async function deleteProcess(): Promise<void> {
-    const unsent = photos.filter((p) => p.status !== 'sent').length;
-    const saved = photos.length - unsent;
-    const lines = [`Eliminar o processo ${process.id} da app?`];
-    if (saved > 0) {
-      lines.push(`${formatPhotoCount(saved)} já guardada${saved === 1 ? '' : 's'} continua${saved === 1 ? '' : 'm'} no telemóvel, na pasta ${isNativeApp() ? `Documents/Inspeções/${process.folder}` : `do processo (${process.folder})`}.`);
-    }
-    if (unsent > 0) lines.push(`Atenção: ${formatPhotoCount(unsent)} ainda não ${unsent === 1 ? 'foi guardada e perde-se' : 'foram guardadas e perdem-se'}.`);
+    const n = photos.length;
+    const where = isNativeApp() ? `Documents/Inspeções/${process.folder}` : process.folder;
+    const lines = [`Eliminar o processo ${process.id}?`];
+    lines.push(
+      n > 0
+        ? `A pasta ${where} e as ${formatPhotoCount(n)} são apagadas do telemóvel. Não dá para desfazer.`
+        : `A pasta ${where} também é apagada do telemóvel.`,
+    );
     if (!confirm(lines.join('\n\n'))) return;
+    let failed = 0;
+    try {
+      failed = (await ctx.provider.deleteProcessFolder?.(process.folder))?.failed ?? 0;
+    } catch {
+      failed = 1;
+    }
     for (const p of await ctx.store.listByProcess(process.id)) await ctx.store.remove(p.id);
     for (const key of [`divisions:${process.id}`, `divisions-common:${process.id}`, `fractions:${process.id}`, `imported:${process.id}`]) {
       await ctx.store.setMeta(key, null);
@@ -98,6 +105,11 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
     await ctx.localProcesses?.remove(process.id);
     ctx.queue.notify();
     location.replace(homeHash());
+    if (failed > 0) {
+      toast(`Processo eliminado, mas ${failed === 1 ? 'uma foto não pôde' : `${failed} fotos não puderam`} ser apagada${failed === 1 ? '' : 's'}. Apague a pasta ${where} na app Ficheiros.`, 8000);
+    } else {
+      toast(`Processo ${process.id} eliminado.`);
+    }
   }
 
   async function refresh(): Promise<void> {

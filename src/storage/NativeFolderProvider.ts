@@ -20,6 +20,13 @@ export class NativeFolderProvider implements StorageProvider {
     return this.processes.list();
   }
 
+  async deleteProcessFolder(processFolder: string): Promise<{ deleted: number; failed: number }> {
+    if (!processFolder || processFolder.includes('/') || processFolder === '.' || processFolder === '..') {
+      return { deleted: 0, failed: 0 };
+    }
+    return NativePhotos.deleteFolder({ folder: `${NATIVE_ROOT}/${processFolder}` });
+  }
+
   async uploadPhoto(req: UploadRequest): Promise<UploadResult> {
     const segments = req.folder.split('/').filter((s) => s !== '');
     if (segments.some((s) => s === '.' || s === '..') || req.fileName.includes('/')) {

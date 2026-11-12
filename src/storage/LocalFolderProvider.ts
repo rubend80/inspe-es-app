@@ -20,6 +20,18 @@ export class LocalFolderProvider implements StorageProvider {
     return this.processes.list();
   }
 
+  async deleteProcessFolder(processFolder: string): Promise<{ deleted: number; failed: number }> {
+    const root = await this.access.getRoot();
+    if (!root?.removeEntry || !processFolder || processFolder.includes('/')) return { deleted: 0, failed: 0 };
+    try {
+      await root.removeEntry(processFolder, { recursive: true });
+      return { deleted: 1, failed: 0 };
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'NotFoundError') return { deleted: 0, failed: 0 };
+      return { deleted: 0, failed: 1 };
+    }
+  }
+
   async uploadPhoto(req: UploadRequest): Promise<UploadResult> {
     const segments = req.folder.split('/').filter((s) => s !== '');
     if (segments.some((s) => s === '.' || s === '..') || req.fileName.includes('/') || req.fileName.includes('\\')) {

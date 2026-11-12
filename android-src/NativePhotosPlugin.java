@@ -270,6 +270,91 @@ public class NativePhotosPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void deleteFolder(PluginCall call) {
+        String folder = call.getString("folder");
+        if (folder == null || folder.isEmpty() || !folder.startsWith(APP_ROOT + "/") || folder.contains("..")) {
+            call.reject("Pasta inválida.");
+            return;
+        }
+        int deleted = 0;
+        int failed = 0;
+        ContentResolver resolver = getContext().getContentResolver();
+        if (Build.VERSION.SDK_INT >= 29) {
+            Uri files = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL);
+            String escaped = folder.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+            String selection = MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ? ESCAPE '\\' OR "
+                + MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ? ESCAPE '\\'";
+            String[] args = new String[] {
+                Environment.DIRECTORY_DOCUMENTS + "/" + escaped + "/%",
+                Environment.DIRECTORY_PICTURES + "/" + escaped + "/%"
+            };
+            try (Cursor c = resolver.query(files, new String[] { MediaStore.MediaColumns._ID }, selection, args, null)) {
+                if (c != null) {
+                    while (c.moveToNext()) {
+                        Uri item = ContentUris.withAppendedId(files, c.getLong(0));
+                        try {
+                            if (resolver.delete(item, null, null) > 0) deleted++;
+                            else failed++;
+                        } catch (SecurityException e) {
+                            failed++; // ficheiro que já não é da app (ex.: depois de reinstalar)
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                call.reject("Não foi possível apagar as fotos: " + e.getMessage());
+                return;
+            }
+            // Pastas vazias que ficaram para trás
+            deleteEmptyDirs(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), folder));
+            deleteEmptyDirs(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), folder));
+        } else {
+            int[] counts = deleteTree(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), folder));
+            deleted = counts[0];
+            failed = counts[1];
+        }
+        JSObject r = new JSObject();
+        r.put("deleted", deleted);
+        r.put("failed", failed);
+        call.resolve(r);
+    }
+
+    private static void deleteEmptyDirs(File dir) {
+        try {
+            if (!dir.isDirectory()) return;
+            File[] children = dir.listFiles();
+            if (children != null) for (File child : children) if (child.isDirectory()) deleteEmptyDirs(child);
+            File[] left = dir.listFiles();
+            if (left == null || left.length == 0) //noinspection ResultOfMethodCallIgnored
+                dir.delete();
+        } catch (Exception ignored) {
+            // sem acesso direto às pastas: ficam vazias
+        }
+    }
+
+    private int[] deleteTree(File f) {
+        int[] counts = new int[] { 0, 0 };
+        if (!f.exists()) return counts;
+        if (f.isDirectory()) {
+            File[] children = f.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    int[] c = deleteTree(child);
+                    counts[0] += c[0];
+                    counts[1] += c[1];
+                }
+            }
+            //noinspection ResultOfMethodCallIgnored
+            f.delete();
+        } else if (f.delete()) {
+            counts[0]++;
+            MediaScannerConnection.scanFile(getContext(), new String[] { f.getAbsolutePath() }, null, null);
+        } else {
+            counts[1]++;
+        }
+        return counts;
+    }
+
+    @PluginMethod
     public void thumbnail(PluginCall call) {
         String uri = call.getString("uri");
         int size = call.getInt("size", 360);

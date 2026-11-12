@@ -31,6 +31,11 @@ export interface StorageProvider {
   readonly needsNetwork: boolean;
   listProcesses(): Promise<Process[]>;
   uploadPhoto(req: UploadRequest): Promise<UploadResult>;
+  /**
+   * Apaga a pasta de um processo e tudo o que tem dentro (fotos). Opcional.
+   * Devolve quantos ficheiros apagou e quantos não conseguiu apagar.
+   */
+  deleteProcessFolder?(processFolder: string): Promise<{ deleted: number; failed: number }>;
 }
 
 export class UploadError extends Error {
