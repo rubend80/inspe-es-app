@@ -1,5 +1,6 @@
 import type { AppContext } from '../context.ts';
 import { formatPhotoCount } from '../format.ts';
+import { isNativeApp } from '../native/nativePhotos.ts';
 import { COMMON_AREA, inFraction } from '../fractions.ts';
 import { divisionsHash, fractionsHash, homeHash } from '../routes.ts';
 import { summarize, unsentCount } from '../summary.ts';
@@ -74,23 +75,29 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
       part('Fração única', 'Moradia ou um só apartamento', divisionsHash(process.id), single),
     );
     removeSlot.replaceChildren(
-      ...(ctx.localProcesses && photos.length === 0 && fractions.length === 0
-        ? [
-            h(
-              'button',
-              {
-                class: 'btn danger',
-                type: 'button',
-                onclick: () => {
-                  if (!confirm(`Remover o processo ${process.id} da lista? Ainda não tem fotos.`)) return;
-                  void ctx.localProcesses?.remove(process.id).then(() => location.replace(homeHash()));
-                },
-              },
-              'Remover este processo da lista',
-            ),
-          ]
+      ...(ctx.localProcesses
+        ? [h('button', { class: 'btn danger', type: 'button', onclick: () => void deleteProcess() }, 'Eliminar processo')]
         : []),
     );
+  }
+
+  /** Tira o processo da app (lista, fotos registadas, frações e divisões). Os ficheiros já guardados ficam no telemóvel. */
+  async function deleteProcess(): Promise<void> {
+    const unsent = photos.filter((p) => p.status !== 'sent').length;
+    const saved = photos.length - unsent;
+    const lines = [`Eliminar o processo ${process.id} da app?`];
+    if (saved > 0) {
+      lines.push(`${formatPhotoCount(saved)} já guardada${saved === 1 ? '' : 's'} continua${saved === 1 ? '' : 'm'} no telemóvel, na pasta ${isNativeApp() ? `Documents/Inspeções/${process.folder}` : `do processo (${process.folder})`}.`);
+    }
+    if (unsent > 0) lines.push(`Atenção: ${formatPhotoCount(unsent)} ainda não ${unsent === 1 ? 'foi guardada e perde-se' : 'foram guardadas e perdem-se'}.`);
+    if (!confirm(lines.join('\n\n'))) return;
+    for (const p of await ctx.store.listByProcess(process.id)) await ctx.store.remove(p.id);
+    for (const key of [`divisions:${process.id}`, `divisions-common:${process.id}`, `fractions:${process.id}`, `imported:${process.id}`]) {
+      await ctx.store.setMeta(key, null);
+    }
+    await ctx.localProcesses?.remove(process.id);
+    ctx.queue.notify();
+    location.replace(homeHash());
   }
 
   async function refresh(): Promise<void> {

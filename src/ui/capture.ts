@@ -112,7 +112,8 @@ export function mountCapture(
     hidden: true,
     onchange: () => void onNativeFiles(galleryInput),
   });
-  let mode: CameraMode = savedCameraMode();
+  // Na app Android só há a câmara do telemóvel.
+  let mode: CameraMode = isNativeApp() ? 'phone' : savedCameraMode();
 
   const shutter = h('button', {
     class: 'shutter',
@@ -180,10 +181,7 @@ export function mountCapture(
     h('button', { class: 'link-btn', type: 'button', onclick: () => setMode('app') }, 'Usar a câmara da app (zoom, fotos seguidas)'),
   );  // Na app Android instalada: a câmara normal do telemóvel, com as fotos a entrarem sozinhas.
   const nativeSession = isNativeApp()
-    ? createNativeSession(ctx, process, division, fraction, [
-        h('button', { class: 'btn', type: 'button', onclick: () => galleryInput.click() }, 'Juntar fotos da galeria'),
-        h('button', { class: 'link-btn', type: 'button', onclick: () => setMode('app') }, 'Usar a câmara da app (zoom, fotos seguidas)'),
-      ])
+    ? createNativeSession(ctx, process, division, fraction, [])
     : null;
   const phonePanel = nativeSession ? nativeSession.el : webPanel();
 

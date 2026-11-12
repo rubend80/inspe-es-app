@@ -60,17 +60,17 @@ gradle = gradle.replace(
 );
 fs.writeFileSync(gradlePath, gradle);
 
-// 4. Ícone da app
+// 4. Ícone da app (Live House): ícone adaptável (Android 8+) e ícone simples para os Android antigos
 const res = path.join(ANDROID, 'app/src/main/res');
 const icon = path.join(ROOT, 'public/icons/icon-512.png');
+const foreground = path.join(ROOT, 'android-res/ic_launcher_foreground.png');
 for (const dir of fs.readdirSync(res)) {
-  if (!dir.startsWith('mipmap-')) continue;
-  if (dir.startsWith('mipmap-anydpi')) {
-    fs.rmSync(path.join(res, dir), { recursive: true, force: true });
-    continue;
-  }
-  for (const name of ['ic_launcher.png', 'ic_launcher_round.png', 'ic_launcher_foreground.png']) {
+  if (!dir.startsWith('mipmap-') || dir.startsWith('mipmap-anydpi')) continue;
+  for (const name of ['ic_launcher.png', 'ic_launcher_round.png']) {
     if (fs.existsSync(path.join(res, dir, name))) fs.copyFileSync(icon, path.join(res, dir, name));
+  }
+  if (fs.existsSync(path.join(res, dir, 'ic_launcher_foreground.png'))) {
+    fs.copyFileSync(foreground, path.join(res, dir, 'ic_launcher_foreground.png'));
   }
 }
 console.log(`patch-android: ok (${APP_ID}, versão ${versionName} / ${versionCode})`);
