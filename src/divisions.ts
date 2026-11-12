@@ -15,11 +15,10 @@ export const UNIT_DIVISIONS: readonly Division[] = [
   d('Quarto 2', 'quarto-2'),
   d('Quarto 3', 'quarto-3'),
   d('Quarto 4', 'quarto-4'),
-  d('IC 1', 'ic-1'),
-  d('IC 2', 'ic-2'),
+  d('IS 1', 'is-1'),
+  d('IS 2', 'is-2'),
   d('Arrumos', 'arrumos'),
   d('Sótão', 'sotao'),
-  d('Garagem', 'garagem'),
 ];
 
 /** Divisões dos espaços comuns. */
@@ -35,7 +34,7 @@ export const defaultDivisions = (scope: DivisionScope): readonly Division[] =>
 
 /** Sugestões ao acrescentar uma divisão que não está na lista. */
 export const DIVISION_SUGGESTIONS: Record<DivisionScope, string[]> = {
-  unit: ['Quarto 5', 'IC 3', 'Varanda', 'Corredor', 'Despensa', 'Lavandaria', 'Escritório', 'Marquise', 'Cave', 'Quintal'],
+  unit: ['Quarto 5', 'IS 3', 'Varanda', 'Corredor', 'Despensa', 'Lavandaria', 'Escritório', 'Marquise', 'Cave', 'Quintal'],
   common: ['Escadas', 'Hall de entrada', 'Elevador', 'Logradouro', 'Arrecadações', 'Cave', 'Empenas', 'Caixa de escadas'],
 };
 

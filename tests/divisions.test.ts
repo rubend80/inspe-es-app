@@ -12,10 +12,10 @@ import {
 import { makePhoto } from './helpers.ts';
 
 describe('divisões de origem', () => {
-  it('frações (e fração única): as pedidas, por esta ordem, com "IC" em vez de "Casa de banho"', () => {
+  it('frações (e fração única): as pedidas, por esta ordem, com "IS" e sem garagem (só nos espaços comuns)', () => {
     assert.deepEqual(
       UNIT_DIVISIONS.map((d) => d.name),
-      ['Hall', 'Sala', 'Cozinha', 'Quarto 1', 'Quarto 2', 'Quarto 3', 'Quarto 4', 'IC 1', 'IC 2', 'Arrumos', 'Sótão', 'Garagem'],
+      ['Hall', 'Sala', 'Cozinha', 'Quarto 1', 'Quarto 2', 'Quarto 3', 'Quarto 4', 'IS 1', 'IS 2', 'Arrumos', 'Sótão'],
     );
   });
 

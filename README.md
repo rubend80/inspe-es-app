@@ -16,8 +16,8 @@ A ligação ao SharePoint/OneDrive fica para mais tarde e só mexe numa peça (v
      divisões. Fotos em `<processo>/2. Fotos/<fração>/<divisão>/`. Uma fração sem fotos pode ser removida.
    - **Fração única** (moradia ou um só apartamento) → as divisões, sem pasta de fração.
      Fotos em `<processo>/2. Fotos/<divisão>/`.
-3. **Divisões de uma fração (e da fração única):** Hall, Sala, Cozinha, Quarto 1 a 4, IC 1, IC 2, Arrumos, Sótão,
-   Garagem, e "Outra divisão" para acrescentar mais.
+3. **Divisões de uma fração (e da fração única):** Hall, Sala, Cozinha, Quarto 1 a 4, IS 1, IS 2, Arrumos, Sótão
+   e "Outra divisão" (a Garagem está só nos espaços comuns) para acrescentar mais.
 4. **Tocar numa divisão** → câmara já dentro dessa pasta. "Próxima: … →" passa à divisão seguinte.
 5. **Nome das fotos:** só a data e a hora, `20261112_151003.jpg`. Se houver duas fotos do mesmo segundo na mesma
    pasta, a segunda fica `20261112_151003_2.jpg`. A app nunca escreve por cima de outra foto.
