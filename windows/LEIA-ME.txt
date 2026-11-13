@@ -1,0 +1,21 @@
+﻿IMPORTAR FOTOS DAS INSPEÇÕES (telemóvel -> OneDrive)
+
+1. Copie esta pasta para o PC (por exemplo para Documentos\Importar Inspecoes).
+2. Ligue o telemóvel por cabo, desbloqueie-o e, na notificação USB, escolha "Transferência de ficheiros".
+3. Duplo clique em "Importar Inspeções.bat".
+   Na primeira vez procura sozinho a pasta "0. Processos" do OneDrive; se não a encontrar, pede para a escolher.
+
+O que faz:
+- Vê no telemóvel a pasta Documents\Inspeções\<n.º do processo>\2. Fotos.
+- Encontra no OneDrive a pasta do processo com esse número (0. Processos\<ano>\<mês>\<n.º> - morada - cliente).
+- Copia as fotos novas para "2. Fotos", com as mesmas subpastas. As que já lá estão não são copiadas outra vez.
+- Faz a versão leve em "3. Fotos - Light" (como o Image Resizer: Ajustar a 2500 x 1875, qualidade 90).
+- No fim mostra um resumo. Tudo fica registado em importacoes.log.
+- Se um processo não tiver pasta no OneDrive, avisa e não copia nada desse processo.
+
+Importar sozinho sempre que liga o telemóvel:
+- Duplo clique em "Ligar importacao automatica.bat" (uma vez). Fica ativo sempre que inicia sessão no Windows.
+- Para parar: "Desligar importacao automatica.bat".
+
+Outra pasta de processos: "Escolher pasta dos processos.bat".
+As fotos não são apagadas do telemóvel: depois de confirmar no OneDrive, use "Eliminar processo" na app.
