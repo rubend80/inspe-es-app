@@ -1,0 +1,16 @@
+name: Script do Windows
+
+on:
+  push:
+    branches: [main]
+    paths: ['windows/**', '.github/workflows/windows-script.yml']
+  workflow_dispatch:
+
+jobs:
+  testar:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Testar no Windows PowerShell 5.1 (o que vem com o Windows)
+        shell: powershell
+        run: .\windows\tests\Testar-Script.ps1
