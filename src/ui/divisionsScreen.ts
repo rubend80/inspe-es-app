@@ -8,7 +8,7 @@ import { createStatusPill } from './statusPill.ts';
 import { createStorageBanner } from './storageBanner.ts';
 
 /**
- * Divisões de uma parte do processo: dos espaços comuns, de uma fração ou da fração única (fraction ausente).
+ * Divisões de uma parte do processo: dos espaços comuns, de uma fração ou da moradia (fraction ausente).
  * Tocar numa divisão abre a câmara já dentro dessa pasta.
  */
 export function mountDivisions(root: HTMLElement, ctx: AppContext, process: Process, fraction?: Fraction): () => void {
@@ -17,8 +17,8 @@ export function mountDivisions(root: HTMLElement, ctx: AppContext, process: Proc
   let photos: PhotoRecord[] = [];
   const scope = scopeOf(fraction);
   const isCommon = scope === 'common';
-  const title = fraction ? fraction.name : 'Fração única';
-  // Voltar: de uma fração volta à lista das frações; dos espaços comuns e da fração única volta ao processo.
+  const title = fraction ? fraction.name : 'Moradia';
+  // Voltar: de uma fração volta à lista das frações; dos espaços comuns e da moradia volta ao processo.
   const backHref = fraction && !isCommon ? fractionsHash(process.id) : processHash(process.id);
 
   const pill = createStatusPill(ctx);
@@ -117,7 +117,7 @@ export function mountDivisions(root: HTMLElement, ctx: AppContext, process: Proc
     const input = h('input', {
       class: 'field',
       type: 'text',
-      placeholder: isCommon ? 'Nome (ex.: Escadas)' : 'Nome da divisão (ex.: Varanda)',
+      placeholder: isCommon ? 'Nome (ex.: Escadas)' : scope === 'house' ? 'Nome (ex.: Logradouro)' : 'Nome da divisão (ex.: Varanda)',
       'aria-label': 'Nome da divisão',
       list: 'division-suggestions',
       autocomplete: 'off',

@@ -75,7 +75,7 @@ describe('espaços comuns', () => {
     assert.equal(scopeOf(COMMON_AREA), 'common');
     assert.equal(scopeOf(COMMON_AREA.id), 'common');
     assert.equal(scopeOf({ id: 'fracao-a', name: 'Fração A', folder: 'Fração A' }), 'unit');
-    assert.equal(scopeOf(undefined), 'unit');
+    assert.equal(scopeOf(undefined), 'house');
   });
 
   it('não aparecem na lista das frações, mesmo com fotos', () => {

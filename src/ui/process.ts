@@ -9,7 +9,7 @@ import { h, toast } from './dom.ts';
 import { createStatusPill } from './statusPill.ts';
 import { createStorageBanner } from './storageBanner.ts';
 
-/** Ecrã do processo: escolher Espaços comuns, Frações ou Fração única. */
+/** Ecrã do processo: escolher Espaços comuns, Frações ou Moradia. */
 export function mountProcess(root: HTMLElement, ctx: AppContext, process: Process): () => void {
   let disposed = false;
   let photos: PhotoRecord[] = [];
@@ -72,7 +72,7 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
         fractionsHash(process.id),
         inFractions,
       ),
-      part('Fração única', 'Moradia ou um só apartamento', divisionsHash(process.id), single),
+      part('Moradia', 'Divisões interiores e exteriores', divisionsHash(process.id), single),
     );
     removeSlot.replaceChildren(
       ...(ctx.localProcesses
@@ -99,7 +99,7 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
       failed = 1;
     }
     for (const p of await ctx.store.listByProcess(process.id)) await ctx.store.remove(p.id);
-    for (const key of [`divisions:${process.id}`, `divisions-common:${process.id}`, `fractions:${process.id}`, `imported:${process.id}`]) {
+    for (const key of [`divisions:${process.id}`, `divisions-common:${process.id}`, `divisions-house:${process.id}`, `fractions:${process.id}`, `imported:${process.id}`]) {
       await ctx.store.setMeta(key, null);
     }
     await ctx.localProcesses?.remove(process.id);

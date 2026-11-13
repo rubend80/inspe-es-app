@@ -25,6 +25,14 @@ describe('divisões de origem', () => {
     assert.equal(defaultDivisions('unit'), UNIT_DIVISIONS);
   });
 
+  it('moradia: todas as divisões interiores e depois as exteriores', () => {
+    assert.deepEqual(
+      defaultDivisions('house').map((d) => d.name),
+      ['Hall', 'Sala', 'Cozinha', 'Quarto 1', 'Quarto 2', 'Quarto 3', 'Quarto 4', 'IS 1', 'IS 2', 'Arrumos', 'Sótão', 'Fachada', 'Cobertura', 'Terraço', 'Garagem'],
+    );
+    assert.ok(DIVISION_SUGGESTIONS.house.includes('Logradouro'));
+  });
+
   it('têm ids únicos e pastas com o nome da divisão', () => {
     for (const list of [UNIT_DIVISIONS, COMMON_DIVISIONS]) {
       assert.equal(new Set(list.map((d) => d.id)).size, list.length);

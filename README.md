@@ -14,7 +14,7 @@ A ligação ao SharePoint/OneDrive fica para mais tarde e só mexe numa peça (v
      Fotos em `<processo>/2. Fotos/Espaços comuns/<espaço>/`.
    - **Frações** → começa vazia; cada fração acrescenta-se à mão ("Adicionar fração"). Ao abrir uma fração aparecem as
      divisões. Fotos em `<processo>/2. Fotos/<fração>/<divisão>/`. Uma fração sem fotos pode ser removida.
-   - **Fração única** (moradia ou um só apartamento) → as divisões, sem pasta de fração.
+   - **Moradia** → todas as divisões interiores e exteriores (Fachada, Cobertura, Terraço, Garagem), sem pasta de fração.
      Fotos em `<processo>/2. Fotos/<divisão>/`.
 3. **Divisões de uma fração (e da fração única):** Hall, Sala, Cozinha, Quarto 1 a 4, IS 1, IS 2, Arrumos, Sótão
    e "Outra divisão" (a Garagem está só nos espaços comuns) para acrescentar mais.

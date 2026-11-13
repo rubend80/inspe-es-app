@@ -1,12 +1,12 @@
 import { folderNameFor, slugify } from './naming.ts';
 import type { Division, PhotoRecord } from './types.ts';
 
-/** "unit" = divisões de uma fração (ou da fração única); "common" = espaços comuns do prédio. */
-export type DivisionScope = 'unit' | 'common';
+/** "unit" = divisões de uma fração; "common" = espaços comuns do prédio; "house" = moradia (interiores e exteriores). */
+export type DivisionScope = 'unit' | 'common' | 'house';
 
 const d = (name: string, id: string): Division => ({ id, name, folder: name });
 
-/** Divisões de cada fração (e da fração única), por esta ordem. */
+/** Divisões de cada fração , por esta ordem (a moradia junta-lhes as exteriores). */
 export const UNIT_DIVISIONS: readonly Division[] = [
   d('Hall', 'hall'),
   d('Sala', 'sala'),
@@ -29,13 +29,17 @@ export const COMMON_DIVISIONS: readonly Division[] = [
   d('Garagem', 'garagem'),
 ];
 
+/** Moradia: primeiro as divisões interiores, depois as exteriores. */
+export const HOUSE_DIVISIONS: readonly Division[] = [...UNIT_DIVISIONS, ...COMMON_DIVISIONS];
+
 export const defaultDivisions = (scope: DivisionScope): readonly Division[] =>
-  scope === 'common' ? COMMON_DIVISIONS : UNIT_DIVISIONS;
+  scope === 'common' ? COMMON_DIVISIONS : scope === 'house' ? HOUSE_DIVISIONS : UNIT_DIVISIONS;
 
 /** Sugestões ao acrescentar uma divisão que não está na lista. */
 export const DIVISION_SUGGESTIONS: Record<DivisionScope, string[]> = {
   unit: ['Quarto 5', 'IS 3', 'Varanda', 'Corredor', 'Despensa', 'Lavandaria', 'Escritório', 'Marquise', 'Cave', 'Quintal'],
   common: ['Escadas', 'Hall de entrada', 'Elevador', 'Logradouro', 'Arrecadações', 'Cave', 'Empenas', 'Caixa de escadas'],
+  house: ['Quarto 5', 'IS 3', 'Varanda', 'Corredor', 'Despensa', 'Lavandaria', 'Escritório', 'Cave', 'Logradouro', 'Quintal', 'Jardim', 'Anexo', 'Muros'],
 };
 
 /** Cria uma divisão a partir de um nome escrito pelo inspetor. Devolve undefined se o nome não servir. */

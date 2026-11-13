@@ -200,7 +200,7 @@ export function mountCapture(
         'div',
         { class: 'title-block' },
         h('strong', null, division.name),
-        h('small', null, `Processo ${process.id} · ${fraction ? fraction.name : 'Fração única'}`),
+        h('small', null, `Processo ${process.id} · ${fraction ? fraction.name : 'Moradia'}`),
       ),
       pill.el,
     ),

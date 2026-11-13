@@ -5,9 +5,10 @@ import type { Fraction, PhotoRecord } from './types.ts';
 /** Os espaços comuns do prédio funcionam como uma "fração" especial, com pasta própria e divisões próprias. */
 export const COMMON_AREA: Fraction = { id: 'espacos-comuns', name: 'Espaços comuns', folder: 'Espaços comuns' };
 
-/** Que lista de divisões usar: espaços comuns ou de fração (fração escolhida ou fração única). */
+/** Que lista de divisões usar: espaços comuns, uma fração, ou a moradia (sem fração). */
 export function scopeOf(fraction?: Fraction | string): DivisionScope {
   const id = typeof fraction === 'string' ? fraction : fraction?.id;
+  if (!id) return 'house';
   return id === COMMON_AREA.id ? 'common' : 'unit';
 }
 

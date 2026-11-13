@@ -20,7 +20,7 @@ import { processImage } from './ui/image.ts';
 
 const PROCESSES_KEY = 'processes';
 const extraDivisionsKey = (processId: string, scope: DivisionScope = 'unit'): string =>
-  scope === 'common' ? `divisions-common:${processId}` : `divisions:${processId}`;
+  scope === 'common' ? `divisions-common:${processId}` : scope === 'house' ? `divisions-house:${processId}` : `divisions:${processId}`;
 const extraFractionsKey = (processId: string): string => `fractions:${processId}`;
 
 export function startApp(root: HTMLElement): void {
