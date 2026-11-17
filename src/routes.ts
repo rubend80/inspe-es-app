@@ -2,6 +2,7 @@
 //   #/                                   lista de processos
 //   #/p/<processo>                       processo: Espaços comuns, Frações, Moradia
 //   #/p/<processo>/fracoes               lista das frações
+//   #/p/<processo>/declaracao            declaração de presença
 //   #/p/<processo>/f/<fração>            divisões de uma fração (ou dos espaços comuns)
 //   #/p/<processo>/f/<fração>/<divisão>  câmara dessa divisão
 //   #/p/<processo>/u                     divisões da moradia
@@ -11,6 +12,7 @@ export type Route =
   | { name: 'home' }
   | { name: 'process'; processId: string }
   | { name: 'fractions'; processId: string }
+  | { name: 'declaration'; processId: string }
   /** fractionId ausente = moradia */
   | { name: 'divisions'; processId: string; fractionId?: string }
   | { name: 'division'; processId: string; divisionId: string; fractionId?: string };
@@ -19,6 +21,7 @@ const enc = encodeURIComponent;
 export const homeHash = (): string => '#/';
 export const processHash = (processId: string): string => `#/p/${enc(processId)}`;
 export const fractionsHash = (processId: string): string => `${processHash(processId)}/fracoes`;
+export const declarationHash = (processId: string): string => `${processHash(processId)}/declaracao`;
 export const divisionsHash = (processId: string, fractionId?: string): string =>
   fractionId ? `${processHash(processId)}/f/${enc(fractionId)}` : `${processHash(processId)}/u`;
 export const divisionHash = (processId: string, divisionId: string, fractionId?: string): string =>
@@ -41,6 +44,7 @@ export function parseRoute(hash: string): Route {
   const [a, b, c] = rest;
   if (rest.length === 0) return { name: 'process', processId };
   if (rest.length === 1 && a === 'fracoes') return { name: 'fractions', processId };
+  if (rest.length === 1 && a === 'declaracao') return { name: 'declaration', processId };
   if (a === 'u' && rest.length === 1) return { name: 'divisions', processId };
   if (a === 'u' && rest.length === 2 && b) return { name: 'division', processId, divisionId: b };
   if (a === 'f' && rest.length === 2 && b) return { name: 'divisions', processId, fractionId: b };

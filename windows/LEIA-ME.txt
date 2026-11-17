@@ -10,6 +10,7 @@ O que faz:
 - Encontra no OneDrive a pasta do processo com esse número (0. Processos\<ano>\<mês>\<n.º> - morada - cliente).
 - Copia as fotos novas para "2. Fotos", com as mesmas subpastas. As que já lá estão não são copiadas outra vez.
 - Faz a versão leve em "3. Fotos - Light" (como o Image Resizer: Ajustar a 2500 x 1875, qualidade 90).
+- Copia a declaração de presença (PDF) para "7. Outros Dados".
 - No fim mostra um resumo. Tudo fica registado em importacoes.log.
 - Se um processo não tiver pasta no OneDrive, avisa e não copia nada desse processo.
 

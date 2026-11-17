@@ -2,7 +2,9 @@ import type { AppContext } from '../context.ts';
 import { formatPhotoCount } from '../format.ts';
 import { isNativeApp } from '../native/nativePhotos.ts';
 import { COMMON_AREA, inFraction } from '../fractions.ts';
-import { divisionsHash, fractionsHash, homeHash } from '../routes.ts';
+import { declarationHash, divisionsHash, fractionsHash, homeHash } from '../routes.ts';
+import { declarationKey } from './declarationScreen.ts';
+import type { SavedDeclaration } from './declarationScreen.ts';
 import { summarize, unsentCount } from '../summary.ts';
 import type { Fraction, PhotoRecord, Process } from '../types.ts';
 import { h, toast } from './dom.ts';
@@ -14,6 +16,7 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
   let disposed = false;
   let photos: PhotoRecord[] = [];
   let fractions: Fraction[] = [];
+  let declaration: SavedDeclaration | null = null;
 
   const pill = createStatusPill(ctx);
   const banner = createStorageBanner(ctx);
@@ -73,6 +76,17 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
         inFractions,
       ),
       part('Moradia', 'Divisões interiores e exteriores', divisionsHash(process.id), single),
+      h(
+        'a',
+        { class: `part decl${declaration ? ' done' : ''}`, href: declarationHash(process.id) },
+        h(
+          'span',
+          { class: 'part-text' },
+          h('strong', null, 'Declaração de presença'),
+          h('small', null, declaration ? `Assinada a ${new Date(declaration.savedAt).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' })}` : 'Preencher e assinar no telemóvel'),
+        ),
+        h('span', { class: 'part-count' }, declaration ? 'Feita' : 'Por fazer'),
+      ),
     );
     removeSlot.replaceChildren(
       ...(ctx.localProcesses
@@ -99,7 +113,7 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
       failed = 1;
     }
     for (const p of await ctx.store.listByProcess(process.id)) await ctx.store.remove(p.id);
-    for (const key of [`divisions:${process.id}`, `divisions-common:${process.id}`, `divisions-house:${process.id}`, `fractions:${process.id}`, `imported:${process.id}`]) {
+    for (const key of [`divisions:${process.id}`, `divisions-common:${process.id}`, `divisions-house:${process.id}`, `fractions:${process.id}`, `imported:${process.id}`, declarationKey(process.id)]) {
       await ctx.store.setMeta(key, null);
     }
     await ctx.localProcesses?.remove(process.id);
@@ -113,10 +127,15 @@ export function mountProcess(root: HTMLElement, ctx: AppContext, process: Proces
   }
 
   async function refresh(): Promise<void> {
-    const [all, fracs] = await Promise.all([ctx.store.listByProcess(process.id), ctx.fractions.list(process.id)]);
+    const [all, fracs, decl] = await Promise.all([
+      ctx.store.listByProcess(process.id),
+      ctx.fractions.list(process.id),
+      ctx.store.getMeta<SavedDeclaration>(declarationKey(process.id)),
+    ]);
     if (disposed) return;
     photos = all;
     fractions = fracs;
+    declaration = decl ?? null;
     render();
   }
 

@@ -16,6 +16,7 @@ import { mountHome } from './ui/home.ts';
 import { mountProcess } from './ui/process.ts';
 import { mountFractions } from './ui/fractionsList.ts';
 import { mountDivisions } from './ui/divisionsScreen.ts';
+import { mountDeclaration } from './ui/declarationScreen.ts';
 import { processImage } from './ui/image.ts';
 
 const PROCESSES_KEY = 'processes';
@@ -146,6 +147,10 @@ export function startApp(root: HTMLElement): void {
     }
     if (route.name === 'fractions') {
       unmount = mountFractions(root, ctx, process);
+      return;
+    }
+    if (route.name === 'declaration') {
+      unmount = mountDeclaration(root, ctx, process);
       return;
     }
 

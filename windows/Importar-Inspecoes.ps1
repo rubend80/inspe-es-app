@@ -5,6 +5,7 @@
     2. encontra no OneDrive a pasta do processo (0. Processos\<ano>\<mês>\<n.º> - morada - cliente)
     3. copia as fotos novas para "2. Fotos", com as mesmas subpastas (Espaços comuns\Fachada, Fração A\Cozinha...)
     4. faz a versão leve em "3. Fotos - Light" (como o Image Resizer: Ajustar a 2500 x 1875, qualidade 90)
+    5. copia a declaração de presença (PDF) para "7. Outros Dados"
 
   Uso:
     Importar-Inspecoes.ps1              importa agora (duplo clique em "Importar Inspeções.bat")
@@ -25,6 +26,7 @@ Add-Type -AssemblyName System.Windows.Forms
 $PastaNoTelemovel = 'Inspeções'          # dentro de Documents (ou Pictures) no telemóvel
 $PastaFotos       = '2. Fotos'
 $PastaLight       = '3. Fotos - Light'
+$PastaOutros      = '7. Outros Dados'        # declaração de presença (PDF)
 $LadoMaior        = 2500                 # Image Resizer: Personalizado, Ajustar, 2500 x 1875
 $LadoMenor        = 1875
 $QualidadeJpeg    = 90
@@ -174,12 +176,12 @@ function Get-DestinoLivre([string]$Pasta, [string]$Nome, [int64]$Tamanho) {
   return $null
 }
 
-function Copy-ArvoreTelemovel($PastaTel, [string]$Destino, $Stats) {
+function Copy-ArvoreTelemovel($PastaTel, [string]$Destino, $Stats, [string[]]$Tipos = $Extensoes) {
   if (-not (Test-Path $Destino)) { New-Item -ItemType Directory -Path $Destino -Force | Out-Null }
   foreach ($item in $PastaTel.Items()) {
     $nome = Get-NomeFicheiro $item
-    if ($item.IsFolder) { Copy-ArvoreTelemovel $item.GetFolder (Join-Path $Destino $nome) $Stats; continue }
-    if ($Extensoes -notcontains ([System.IO.Path]::GetExtension($nome).ToLower())) { continue }
+    if ($item.IsFolder) { Copy-ArvoreTelemovel $item.GetFolder (Join-Path $Destino $nome) $Stats $Tipos; continue }
+    if ($Tipos -notcontains ([System.IO.Path]::GetExtension($nome).ToLower())) { continue }
     $tamanho = [int64]0
     try { $tamanho = [int64]$item.ExtendedProperty('System.Size') } catch { }
     if ($tamanho -le 0) { try { $tamanho = [int64]$item.Size } catch { } }
@@ -275,16 +277,23 @@ function Invoke-Importacao {
       $num = Get-NomeFicheiro $proc
       if ($num -notmatch '^\d{4,8}$') { continue }
       $fotosTel = Get-SubPasta $proc.GetFolder $PastaFotos
-      if (-not $fotosTel) { continue }
+      $outrosTel = Get-SubPasta $proc.GetFolder $PastaOutros
+      if (-not $fotosTel -and -not $outrosTel) { continue }
       $destProc = $indice[$num]
       if (-not $destProc) { $semPasta += $num; Write-Log "Processo $num : não existe pasta no OneDrive. Ignorado."; continue }
-      $stats = [pscustomobject]@{ Copiadas = 0; Iguais = 0; Leves = 0; Erros = 0 }
+      $stats = [pscustomobject]@{ Copiadas = 0; Iguais = 0; Leves = 0; Erros = 0; Declaracoes = 0 }
       Write-Log "Processo $num -> $destProc"
-      Copy-ArvoreTelemovel $fotosTel (Join-Path $destProc $PastaFotos) $stats
+      if ($fotosTel) { Copy-ArvoreTelemovel $fotosTel (Join-Path $destProc $PastaFotos) $stats }
+      if ($outrosTel) {
+        $antes = $stats.Copiadas
+        Copy-ArvoreTelemovel $outrosTel (Join-Path $destProc $PastaOutros) $stats @('.pdf')
+        $stats.Declaracoes = $stats.Copiadas - $antes
+        $stats.Copiadas = $antes
+      }
       Update-PastaLight (Join-Path $destProc $PastaFotos) (Join-Path $destProc $PastaLight) $stats
-      Write-Log ("  {0} fotos novas, {1} já lá estavam, {2} versões leves, {3} erros" -f $stats.Copiadas, $stats.Iguais, $stats.Leves, $stats.Erros)
-      if ($stats.Copiadas -gt 0 -or $stats.Leves -gt 0 -or $stats.Erros -gt 0) {
-        $resumo += ("{0}: {1} fotos novas, {2} leves{3}" -f $num, $stats.Copiadas, $stats.Leves, $(if ($stats.Erros) { ", $($stats.Erros) erros" } else { '' }))
+      Write-Log ("  {0} fotos novas, {1} já lá estavam, {2} versões leves, {3} declarações, {4} erros" -f $stats.Copiadas, $stats.Iguais, $stats.Leves, $stats.Declaracoes, $stats.Erros)
+      if ($stats.Copiadas -gt 0 -or $stats.Leves -gt 0 -or $stats.Erros -gt 0 -or $stats.Declaracoes -gt 0) {
+        $resumo += ("{0}: {1} fotos novas, {2} leves{3}{4}" -f $num, $stats.Copiadas, $stats.Leves, $(if ($stats.Declaracoes) { ", declaração de presença" } else { '' }), $(if ($stats.Erros) { ", $($stats.Erros) erros" } else { '' }))
       }
     }
   }
