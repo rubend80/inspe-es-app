@@ -196,8 +196,8 @@ describe('fila com guardar no telemóvel', () => {
 
     assert.equal((await store.get('a'))?.status, 'sent');
     assert.deepEqual(access.root.paths(), [
-      `${remoteFolderFor('260098 - Rua A 1 - Ana', 'Cozinha')}/a.jpg`,
-      `${remoteLightFolderFor('260098 - Rua A 1 - Ana', 'Cozinha')}/a.jpg`,
+      `${remoteFolderFor('260098 - Rua A 1 - Ana', 'Cozinha', undefined, 1)}/a.jpg`,
+      `${remoteLightFolderFor('260098 - Rua A 1 - Ana', 'Cozinha', undefined, 1)}/a.jpg`,
     ].sort());
   });
 

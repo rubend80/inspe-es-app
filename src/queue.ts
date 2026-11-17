@@ -173,7 +173,7 @@ export class UploadQueue {
       let remotePath = photo.remotePath;
       if (!remotePath) {
         const result = await this.provider.uploadPhoto({
-          folder: remoteFolderFor(photo.processFolder, photo.divisionFolder, photo.fractionFolder),
+          folder: remoteFolderFor(photo.processFolder, photo.divisionFolder, photo.fractionFolder, photo.takenAt),
           fileName: photo.fileName,
           blob: photo.blob,
         });
@@ -191,7 +191,7 @@ export class UploadQueue {
           throw new UploadError(`Não foi possível criar a versão leve (${errorMessage(err)}).`, { retryable: false });
         }
         const result = await this.provider.uploadPhoto({
-          folder: remoteLightFolderFor(photo.processFolder, photo.divisionFolder, photo.fractionFolder),
+          folder: remoteLightFolderFor(photo.processFolder, photo.divisionFolder, photo.fractionFolder, photo.takenAt),
           fileName: lightFileNameFor(photo.fileName),
           blob: light,
         });

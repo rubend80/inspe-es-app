@@ -27,9 +27,10 @@ O que fica no telemóvel, por exemplo:
 ```
 Documents / Inspeções / 260098 /
     2. Fotos /
-        Espaços comuns / Fachada / 20261112_150201.jpg
-        Fração A / Cozinha / 20261112_151003.jpg
-        Sala / 20261112_152410.jpg                    (fração única)
+        2026.11.12 /                                   (pasta do dia em que as fotos foram tiradas)
+            Espaços comuns / Fachada / 20261112_150201.jpg
+            Fração A / Cozinha / 20261112_151003.jpg
+            Sala / 20261112_152410.jpg                (moradia)
 ```
 
 Por baixo:

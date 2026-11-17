@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   buildPhotoFileName,
+  dateFolderFor,
   uniqueFileName,
   dayKey,
   extFromMime,
@@ -168,6 +169,15 @@ describe('pastas de destino', () => {
   it('sem fração (ou fração vazia) nada muda', () => {
     assert.equal(remoteFolderFor(processo, 'Cozinha', undefined), `${processo}/2. Fotos/Cozinha`);
     assert.equal(remoteFolderFor(processo, 'Cozinha', ''), `${processo}/2. Fotos/Cozinha`);
+  });
+
+  it('a seguir a "2. Fotos" vem a pasta do dia (2026.11.17), antes da fração e da divisão', () => {
+    const dia = new Date(2026, 10, 17, 10, 52);
+    assert.equal(dateFolderFor(dia), '2026.11.17');
+    assert.equal(dateFolderFor(new Date(2026, 0, 5)), '2026.01.05');
+    assert.equal(remoteFolderFor(processo, 'Cozinha', 'Fração A', dia), `${processo}/2. Fotos/2026.11.17/Fração A/Cozinha`);
+    assert.equal(remoteFolderFor(processo, 'Cozinha', undefined, dia.getTime()), `${processo}/2. Fotos/2026.11.17/Cozinha`);
+    assert.equal(remoteLightFolderFor(processo, 'Cozinha', undefined, dia), `${processo}/3. Fotos - Light/2026.11.17/Cozinha`);
   });
 
   it('sem divisão fica na pasta das fotos', () => {

@@ -28,10 +28,10 @@ describe('UploadQueue', () => {
     await queue.kick();
 
     assert.deepEqual(provider.uploaded.map((u) => u.fileName), ['a.jpg', 'b.jpg']);
-    assert.equal(provider.uploaded[0]?.folder, remoteFolderFor('2026-0142', 'Cozinha'), 'a foto vai para a pasta da divisão');
+    assert.equal(provider.uploaded[0]?.folder, remoteFolderFor('2026-0142', 'Cozinha', undefined, 1000), 'a foto vai para a pasta do dia e da divisão');
     const a = await store.get('a');
     assert.equal(a?.status, 'sent');
-    assert.equal(a?.remotePath, `${remoteFolderFor('2026-0142', 'Cozinha')}/a.jpg`);
+    assert.equal(a?.remotePath, `${remoteFolderFor('2026-0142', 'Cozinha', undefined, 1000)}/a.jpg`);
     assert.equal(a?.blob, undefined, 'a foto original sai do telemóvel depois de enviada');
   });
 
@@ -179,12 +179,12 @@ describe('UploadQueue com versão leve', () => {
 
     assert.deepEqual(
       provider.uploaded.map((u) => `${u.folder}|${u.fileName}`),
-      [`${remoteFolderFor('2026-0142', 'Cozinha')}|a.png`, `${remoteLightFolderFor('2026-0142', 'Cozinha')}|a.jpg`],
+      [`${remoteFolderFor('2026-0142', 'Cozinha', undefined, 1)}|a.png`, `${remoteLightFolderFor('2026-0142', 'Cozinha', undefined, 1)}|a.jpg`],
     );
     const a = await store.get('a');
     assert.equal(a?.status, 'sent');
-    assert.equal(a?.remotePath, `${remoteFolderFor('2026-0142', 'Cozinha')}/a.png`);
-    assert.equal(a?.lightRemotePath, `${remoteLightFolderFor('2026-0142', 'Cozinha')}/a.jpg`);
+    assert.equal(a?.remotePath, `${remoteFolderFor('2026-0142', 'Cozinha', undefined, 1)}/a.png`);
+    assert.equal(a?.lightRemotePath, `${remoteLightFolderFor('2026-0142', 'Cozinha', undefined, 1)}/a.jpg`);
     assert.ok((a?.lightSize ?? 0) > 0);
     assert.equal(a?.blob, undefined, 'só se apaga o original quando as duas versões seguiram');
   });
@@ -299,7 +299,7 @@ describe('PhotoService', () => {
     assert.equal(saved?.height, 3000);
     assert.equal(saved?.blob, undefined, 'a original é apagada depois de enviada (a pré-visualização fica)');
     assert.equal(saved?.status, 'sent');
-    assert.equal(provider.uploaded[0]?.folder, remoteFolderFor('2026-0142', 'Cozinha'));
+    assert.equal(provider.uploaded[0]?.folder, '2026-0142/2. Fotos/2026.11.03/Cozinha', 'a seguir a 2. Fotos vem a pasta do dia');
   });
 
   it('numa fração: pasta da fração entre "2. Fotos" e a divisão, no original e na versão leve', async () => {
@@ -323,9 +323,9 @@ describe('PhotoService', () => {
     assert.equal(saved?.status, 'sent');
     assert.deepEqual(
       provider.uploaded.map((u) => u.folder),
-      [remoteFolderFor('2026-0142', 'Cozinha', 'Fração A'), remoteLightFolderFor('2026-0142', 'Cozinha', 'Fração A')],
+      [remoteFolderFor('2026-0142', 'Cozinha', 'Fração A', takenAt), remoteLightFolderFor('2026-0142', 'Cozinha', 'Fração A', takenAt)],
     );
-    assert.equal(provider.uploaded[0]?.folder, '2026-0142/2. Fotos/Fração A/Cozinha');
+    assert.equal(provider.uploaded[0]?.folder, '2026-0142/2. Fotos/2026.11.03/Fração A/Cozinha');
   });
 
   it('a mesma divisão em frações diferentes (e sem fração) vai para pastas diferentes', async () => {
@@ -336,13 +336,14 @@ describe('PhotoService', () => {
     const photos = new PhotoService(store, queue, async () => ({}));
     const a = { id: 'fracao-a', name: 'Fração A', folder: 'Fração A' };
     const b = { id: 'fracao-b', name: 'Fração B', folder: 'Fração B' };
-    await photos.addPhoto(process, cozinha, new Blob(['1']), undefined, a);
-    await photos.addPhoto(process, cozinha, new Blob(['2']), undefined, b);
-    await photos.addPhoto(process, cozinha, new Blob(['3']));
+    const dia = new Date(2026, 10, 17, 10, 0, 0);
+    await photos.addPhoto(process, cozinha, new Blob(['1']), dia, a);
+    await photos.addPhoto(process, cozinha, new Blob(['2']), dia, b);
+    await photos.addPhoto(process, cozinha, new Blob(['3']), dia);
     await queue.kick();
     assert.deepEqual(
       provider.uploaded.map((u) => u.folder).sort(),
-      ['2026-0142/2. Fotos/Cozinha', '2026-0142/2. Fotos/Fração A/Cozinha', '2026-0142/2. Fotos/Fração B/Cozinha'],
+      ['2026-0142/2. Fotos/2026.11.17/Cozinha', '2026-0142/2. Fotos/2026.11.17/Fração A/Cozinha', '2026-0142/2. Fotos/2026.11.17/Fração B/Cozinha'],
     );
   });
 
@@ -353,13 +354,15 @@ describe('PhotoService', () => {
     queues.push(queue);
     const photos = new PhotoService(store, queue, async () => ({}));
 
-    await photos.addPhoto(process, cozinha, new Blob(['1']));
-    await photos.addPhoto(process, banho, new Blob(['2']));
+    const dia = new Date(2026, 10, 17, 10, 0, 0);
+    await photos.addPhoto(process, cozinha, new Blob(['1']), dia);
+    await photos.addPhoto(process, banho, new Blob(['2']), dia);
+    await photos.addPhoto(process, cozinha, new Blob(['3']), new Date(2026, 10, 18, 9, 0, 0));
     await queue.kick();
 
     assert.deepEqual(
       provider.uploaded.map((u) => u.folder).sort(),
-      [remoteFolderFor('2026-0142', 'Casa de banho 1'), remoteFolderFor('2026-0142', 'Cozinha')].sort(),
+      ['2026-0142/2. Fotos/2026.11.17/Casa de banho 1', '2026-0142/2. Fotos/2026.11.17/Cozinha', '2026-0142/2. Fotos/2026.11.18/Cozinha'],
     );
   });
 

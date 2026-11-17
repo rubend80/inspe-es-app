@@ -1,5 +1,4 @@
 import type { AppContext } from '../context.ts';
-import { DIVISION_SUGGESTIONS } from '../divisions.ts';
 import { inFraction, scopeOf } from '../fractions.ts';
 import { divisionHash, fractionsHash, processHash } from '../routes.ts';
 import type { Division, Fraction, PhotoRecord, Process } from '../types.ts';
@@ -26,7 +25,7 @@ export function mountDivisions(root: HTMLElement, ctx: AppContext, process: Proc
   const removeSlot = h('div', { class: 'remove-slot' });
   const barNum = h('span', { class: 'bar-num' }, '');
   const tiles = h('div', { class: 'tile-grid' });
-  const where = fraction ? `2. Fotos / ${fraction.folder} / <divisão>` : '2. Fotos / <divisão>';
+  const where = fraction ? `2. Fotos / <dia> / ${fraction.folder} / <divisão>` : '2. Fotos / <dia> / <divisão>';
 
   root.append(
     h(
@@ -117,9 +116,8 @@ export function mountDivisions(root: HTMLElement, ctx: AppContext, process: Proc
     const input = h('input', {
       class: 'field',
       type: 'text',
-      placeholder: isCommon ? 'Nome (ex.: Escadas)' : scope === 'house' ? 'Nome (ex.: Logradouro)' : 'Nome da divisão (ex.: Varanda)',
+      placeholder: isCommon ? 'Nome do espaço' : 'Nome da divisão',
       'aria-label': 'Nome da divisão',
-      list: 'division-suggestions',
       autocomplete: 'off',
       maxLength: 40,
       onkeydown: (e: Event) => {
@@ -142,7 +140,6 @@ export function mountDivisions(root: HTMLElement, ctx: AppContext, process: Proc
     dlg.append(
       h('h2', { class: 'dlg-title' }, isCommon ? 'Outro espaço comum' : 'Outra divisão'),
       input,
-      h('datalist', { id: 'division-suggestions' }, ...DIVISION_SUGGESTIONS[scope].map((s) => h('option', { value: s }))),
       h(
         'div',
         { class: 'dlg-actions' },

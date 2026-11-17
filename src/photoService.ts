@@ -66,10 +66,10 @@ export class PhotoService {
 
   /** Nome livre na pasta onde a foto vai ficar (data_hora, e _2, _3... se houver outra no mesmo segundo). */
   private async freeName(process: Process, division: Division, fraction: Fraction | undefined, takenAt: Date, mimeType: string): Promise<string> {
-    const folder = remoteFolderFor(process.folder, division.folder, fraction?.folder);
+    const folder = remoteFolderFor(process.folder, division.folder, fraction?.folder, takenAt);
     const taken = new Set(
       (await this.store.listByProcess(process.id))
-        .filter((p) => remoteFolderFor(p.processFolder, p.divisionFolder, p.fractionFolder) === folder)
+        .filter((p) => remoteFolderFor(p.processFolder, p.divisionFolder, p.fractionFolder, p.takenAt) === folder)
         .map((p) => p.fileName),
     );
     return uniqueFileName(buildPhotoFileName({ takenAt, mimeType }), taken);
@@ -118,7 +118,7 @@ export class PhotoService {
   ): Promise<PhotoRecord> {
     return this.oneAtATime(async () => {
     const fileName = await this.freeName(process, division, fraction, info.takenAt, info.mimeType);
-    const remotePath = await saveTo(remoteFolderFor(process.folder, division.folder, fraction?.folder), fileName);
+    const remotePath = await saveTo(remoteFolderFor(process.folder, division.folder, fraction?.folder, info.takenAt), fileName);
     const record: PhotoRecord = {
       id: this.newId(),
       processId: process.id,

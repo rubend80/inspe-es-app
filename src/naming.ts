@@ -7,8 +7,8 @@
 // Num prédio, com frações, há uma pasta da fração antes da divisão:
 //   <processo> / 2. Fotos / <fração> / <divisão> / <foto>
 // Exemplo:  2026/02 Fevereiro/260098 - Praça de Portugal 7 Odivelas - Ana Mafalda Leiria
-//             / 2. Fotos / Cozinha / 20261103_143015.jpg
-//             / 2. Fotos / Fração A / Cozinha / 20261103_143100.jpg
+//             / 2. Fotos / 2026.11.03 / Cozinha / 20261103_143015.jpg
+//             / 2. Fotos / 2026.11.03 / Fração A / Cozinha / 20261103_143100.jpg
 
 /**
  * Pasta, dentro do processo, onde ficam as fotos da inspeção (as originais, em resolução total).
@@ -118,14 +118,34 @@ function joinFolders(...parts: (string | undefined)[]): string {
   return parts.filter((part): part is string => Boolean(part)).join('/');
 }
 
-/** Pasta de destino do original de uma foto, relativa à raiz dos processos. A fração é opcional. */
-export function remoteFolderFor(processFolder: string, divisionFolder?: string, fractionFolder?: string): string {
-  return joinFolders(processFolder, PHOTOS_SUBFOLDER, fractionFolder, divisionFolder);
+/** Pasta do dia em que a foto foi tirada, logo a seguir a "2. Fotos". Exemplo: 2026.11.17 */
+export function dateFolderFor(takenAt: Date | number): string {
+  const d = new Date(takenAt);
+  const p = (n: number): string => String(n).padStart(2, '0');
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
 }
 
-/** Pasta de destino da versão leve de uma foto, relativa à raiz dos processos. A fração é opcional. */
-export function remoteLightFolderFor(processFolder: string, divisionFolder?: string, fractionFolder?: string): string {
-  return joinFolders(processFolder, LIGHT_SUBFOLDER, fractionFolder, divisionFolder);
+/**
+ * Pasta de destino do original de uma foto, relativa à raiz dos processos:
+ * <processo>/2. Fotos/<data>/<fração>/<divisão>. A data e a fração são opcionais.
+ */
+export function remoteFolderFor(
+  processFolder: string,
+  divisionFolder?: string,
+  fractionFolder?: string,
+  takenAt?: Date | number,
+): string {
+  return joinFolders(processFolder, PHOTOS_SUBFOLDER, takenAt === undefined ? undefined : dateFolderFor(takenAt), fractionFolder, divisionFolder);
+}
+
+/** Pasta de destino da versão leve de uma foto (mesma estrutura, em "3. Fotos - Light"). */
+export function remoteLightFolderFor(
+  processFolder: string,
+  divisionFolder?: string,
+  fractionFolder?: string,
+  takenAt?: Date | number,
+): string {
+  return joinFolders(processFolder, LIGHT_SUBFOLDER, takenAt === undefined ? undefined : dateFolderFor(takenAt), fractionFolder, divisionFolder);
 }
 
 /** A versão leve é sempre JPEG: mesmo nome do original, com a extensão .jpg. */

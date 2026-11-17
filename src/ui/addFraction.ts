@@ -8,7 +8,7 @@ export function openAddFractionDialog(ctx: AppContext, process: Process, onAdded
   const input = h('input', {
     class: 'field',
     type: 'text',
-    placeholder: 'Nome da fração (ex.: Fração A, 1.º Esq.)',
+    placeholder: 'Nome da fração',
     'aria-label': 'Nome da fração',
     name: 'fracao',
     autocomplete: 'off',
